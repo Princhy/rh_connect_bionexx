@@ -1,0 +1,79 @@
+frontend/
+├── public/
+│   ├── index.html
+│   └── favicon.ico
+├── src/
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── Header.tsx
+│   │   │   ├── Sidebar.tsx
+│   │   │   ├── Layout.tsx
+│   │   │   ├── Loading.tsx
+│   │   │   └── ErrorBoundary.tsx
+│   │   ├── auth/
+│   │   │   ├── LoginForm.tsx
+│   │   │   └── ProtectedRoute.tsx
+│   │   ├── users/
+│   │   │   ├── UserList.tsx
+│   │   │   ├── UserForm.tsx
+│   │   │   └── UserDetails.tsx
+│   │   ├── employees/
+│   │   │   ├── EmployeeList.tsx
+│   │   │   ├── EmployeeForm.tsx
+│   │   │   └── EmployeeDetails.tsx
+│   │   ├── pointages/
+│   │   │   ├── PointageList.tsx
+│   │   │   ├── PointageForm.tsx
+│   │   │   └── AnomaliesDisplay.tsx
+│   │   ├── timesheets/
+│   │   │   ├── TimesheetList.tsx
+│   │   │   ├── TimesheetForm.tsx
+│   │   │   └── TimesheetValidation.tsx
+│   │   ├── cantine/
+│   │   │   ├── MenuList.tsx
+│   │   │   ├── MenuForm.tsx
+│   │   │   └── CantineStats.tsx
+│   │   └── dashboard/
+│   │       ├── DashboardMain.tsx
+│   │       ├── StatsCards.tsx
+│   │       └── Charts.tsx
+│   ├── pages/
+│   │   ├── Dashboard.tsx
+│   │   ├── Login.tsx
+│   │   ├── Users.tsx
+│   │   ├── Employees.tsx
+│   │   ├── Pointages.tsx
+│   │   ├── Timesheets.tsx
+│   │   ├── Cantine.tsx
+│   │   └── Reports.tsx
+│   ├── hooks/
+│   │   ├── useAuth.ts
+│   │   ├── useApi.ts
+│   │   └── useLocalStorage.ts
+│   ├── services/
+│   │   ├── api.ts
+│   │   ├── authService.ts
+│   │   ├── userService.ts
+│   │   ├── employeeService.ts
+│   │   ├── pointageService.ts
+│   │   ├── timesheetService.ts
+│   │   └── cantineService.ts
+│   ├── types/
+│   │   ├── User.ts
+│   │   ├── Employee.ts
+│   │   ├── Pointage.ts
+│   │   ├── Timesheet.ts
+│   │   └── Cantine.ts
+│   ├── utils/
+│   │   ├── constants.ts
+│   │   ├── helpers.ts
+│   │   └── validation.ts
+│   ├── context/
+│   │   └── AuthContext.tsx
+│   ├── App.tsx
+│   ├── index.tsx
+│   └── index.css
+├── tailwind.config.js
+├── package.json
+├── tsconfig.json
+└── .env

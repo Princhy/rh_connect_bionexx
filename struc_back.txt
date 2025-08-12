@@ -1,0 +1,60 @@
+backend/
+├── src/
+│   ├── controllers/
+│   │   ├── AuthController.ts
+│   │   ├── UserController.ts
+│   │   ├── EmployeeController.ts
+│   │   ├── PointageController.ts
+│   │   ├── TimesheetController.ts
+│   │   ├── CantineController.ts
+│   │   └── DashboardController.ts
+│   ├── entities/
+│   │   ├── User.ts
+│   │   ├── Employee.ts
+│   │   ├── Pointage.ts
+│   │   ├── Pointeuse.ts
+│   │   ├── PassageCantine.ts
+│   │   ├── MenuCantine.ts
+│   │   ├── Timesheet.ts
+│   │   ├── Departement.ts
+│   │   ├── Lieu.ts
+│   │   └── Equipe.ts
+│   ├── routes/
+│   │   ├── auth.ts
+│   │   ├── users.ts
+│   │   ├── employees.ts
+│   │   ├── pointages.ts
+│   │   ├── timesheets.ts
+│   │   ├── cantine.ts
+│   │   └── dashboard.ts
+│   ├── middleware/
+│   │   ├── auth.ts
+│   │   ├── validation.ts
+│   │   ├── errorHandler.ts
+│   │   └── rateLimiter.ts
+│   ├── services/
+│   │   ├── AuthService.ts
+│   │   ├── EmployeeService.ts
+│   │   ├── PointageService.ts
+│   │   ├── TimesheetService.ts
+│   │   ├── CantineService.ts
+│   │   ├── SynchronizationService.ts
+│   │   └── ReportService.ts
+│   ├── utils/
+│   │   ├── database.ts
+│   │   ├── jwt.ts
+│   │   ├── validation.ts
+│   │   └── anomalyDetection.ts
+│   ├── config/
+│   │   ├── database.ts
+│   │   └── app.ts
+│   └── app.ts
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── package.json
+├── tsconfig.json
+├── .env
+├── .env.example
+└── .gitignore

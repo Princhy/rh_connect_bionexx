@@ -1,0 +1,43 @@
+{
+  "name": "rh-connect-fullstack",
+  "version": "1.0.0",
+  "description": "Application RH Connect - Frontend React Vite + Backend Express TypeScript",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install", 
+    "install:all": "npm run install:frontend && npm run install:backend",
+    
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    
+    "start:frontend": "cd frontend && npm run preview",
+    "start:backend": "cd backend && npm start",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint": "npm run lint:frontend",
+    
+    "migration:generate": "cd backend && npm run migration:generate",
+    "migration:run": "cd backend && npm run migration:run",
+    "migration:create": "cd backend && npm run migration:create"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "author": "Votre nom",
+  "license": "MIT"
+}
