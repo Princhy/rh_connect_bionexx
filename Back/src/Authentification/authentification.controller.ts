@@ -48,7 +48,8 @@ export class LoginController extends Controller {
             prenom: user.prenom,
             matricule: user.matricule,
             email: user.email,
-            role: user.role
+            role: user.role,
+            id_departement: user.id_departement,
         };
 
         // Vérifier le mot de passe

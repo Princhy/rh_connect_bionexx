@@ -17,12 +17,16 @@ import {
   TextField,
   Autocomplete,
   DialogActions,
-  Grid
+  Grid,
+  Tooltip,
+  IconButton
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import { useTheme, alpha } from '@mui/material/styles';
 import axiosInstance from '../config/axiosConfig';
 import {toast} from 'react-toastify';
+import { useAuth } from '../config/authConfig';
 // Type basé sur votre structure de données
 type Employe = {
   id_user: number;
@@ -78,6 +82,10 @@ const ListeEmployes = () => {
   const [data, setData] = useState<Employe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const green = theme.palette.success.main;
+  const {hasRole,hasAnyRole,user} = useAuth();
+
   // États pour les modals
   const [openDelete, setOpenDelete] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
@@ -141,10 +149,15 @@ const ListeEmployes = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        if(hasAnyRole(['Admin','RH'])){
         // Récupérer les employés
         const response = await axiosInstance.get('/users');
         setData(response.data);
-
+        }
+        if(hasRole('Superviseur')){
+          const response = await axiosInstance.get(`/users/departement/${user?.id_departement}`);
+          setData(response.data);
+        }
         // Récupérer les données de référence pour les autocompletes
         const [lieuxRes, equipesRes, departementsRes] = await Promise.all([
           axiosInstance.get('/lieux'),
@@ -255,19 +268,41 @@ const ListeEmployes = () => {
         header: 'Actions',
         size: 100,
         Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <button 
-              className='mx-1' 
-              onClick={() => handleOpenEdit(row.original)}
-            >
-              <EditIcon sx={{ color: 'green' }} />
-            </button>
-            <button 
-              className='mx-1' 
-              onClick={() => handleOpenDelete(row.original)}
-            >
-              <DeleteIcon sx={{ color: 'red' }} />
-            </button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="Modifier">
+              <IconButton
+                size="small"
+                onClick={() => handleOpenEdit(row.original)}
+                sx={{
+                  color: green,
+                  bgcolor: alpha(green, 0.14),
+                  '&:hover': { 
+                    bgcolor: alpha(green, 0.22),
+                    transform: 'scale(1.05)'
+                  },
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Supprimer">
+              <IconButton
+                size="small"
+                onClick={() => handleOpenDelete(row.original)}
+                sx={{
+                  color: theme.palette.error.main,
+                  bgcolor: alpha(theme.palette.error.main, 0.12),
+                  '&:hover': { 
+                    bgcolor: alpha(theme.palette.error.main, 0.2),
+                    transform: 'scale(1.05)'
+                  },
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         )
       },

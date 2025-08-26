@@ -14,6 +14,8 @@ import { PlanningController } from './../src/planningEquipe/planning.controller'
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { LieuController } from './../src/lieu/lieu.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { JourFerieController } from './../src/jourFerie/jourferie.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { EquipeController } from './../src/equipe/equipe.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { DepartementController } from './../src/departement/departement.controller';
@@ -27,7 +29,7 @@ import { RefreshtokenController } from './../src/Authentification/authentificati
 import { LogoutController } from './../src/Authentification/authentification.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { AnalyseController } from './../src/analysePointage/analyse.controller';
-import { expressAuthentication } from './../src/authentification/authentification.middleware';
+import { expressAuthentication } from './../src/Authentification/authentification.middleware';
 // @ts-ignore - no great way to install types from subpackage
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 
@@ -320,6 +322,47 @@ const models: TsoaRoute.Models = {
         "type": {"ref":"Partial_LieuCreationParams_","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "JourFerieOutput": {
+        "dataType": "refObject",
+        "properties": {
+            "id_jourferie": {"dataType":"double","required":true},
+            "nom": {"dataType":"string","required":true},
+            "date": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"string"}],"required":true},
+            "recurrent": {"dataType":"boolean","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "JourFerieResult": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "message": {"dataType":"string","required":true},
+            "data": {"dataType":"any"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "JourFerieCreateParams": {
+        "dataType": "refObject",
+        "properties": {
+            "nom": {"dataType":"string","required":true},
+            "date": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"string"}],"required":true},
+            "recurrent": {"dataType":"boolean"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "JourFerieUpdateParams": {
+        "dataType": "refObject",
+        "properties": {
+            "nom": {"dataType":"string"},
+            "date": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"datetime"}]},
+            "recurrent": {"dataType":"boolean"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "IEquipe": {
         "dataType": "refObject",
         "properties": {
@@ -383,6 +426,11 @@ const models: TsoaRoute.Models = {
         "enums": ["ANNUEL","MALADIE","MATERNITE","PATERNITE","EXCEPTIONNEL","AUTRE"],
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "StatutConge": {
+        "dataType": "refEnum",
+        "enums": ["ATTENTE","VALIDE","REFUSE"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "CongeOutput": {
         "dataType": "refObject",
         "properties": {
@@ -395,6 +443,7 @@ const models: TsoaRoute.Models = {
             "date_depart": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"string"}],"required":true},
             "date_reprise": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"string"}],"required":true},
             "personne_interim": {"dataType":"string"},
+            "statut": {"ref":"StatutConge"},
             "user": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"prenom":{"dataType":"string","required":true},"nom":{"dataType":"string","required":true}}},
             "userInterim": {"dataType":"nestedObjectLiteral","nestedProperties":{"matricule":{"dataType":"string","required":true},"prenom":{"dataType":"string","required":true},"nom":{"dataType":"string","required":true}}},
         },
@@ -422,6 +471,7 @@ const models: TsoaRoute.Models = {
             "date_depart": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"string"}],"required":true},
             "date_reprise": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"string"}],"required":true},
             "personne_interim": {"dataType":"string"},
+            "statut": {"ref":"StatutConge"},
         },
         "additionalProperties": false,
     },
@@ -437,6 +487,7 @@ const models: TsoaRoute.Models = {
             "date_depart": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"datetime"}]},
             "date_reprise": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"datetime"}]},
             "personne_interim": {"dataType":"string"},
+            "statut": {"ref":"StatutConge"},
         },
         "additionalProperties": false,
     },
@@ -460,6 +511,7 @@ const models: TsoaRoute.Models = {
             "prenom": {"dataType":"string"},
             "email": {"dataType":"string","required":true},
             "role": {"ref":"Role","required":true},
+            "id_departement": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },
@@ -475,9 +527,29 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AnalyseValidationResult": {
+        "dataType": "refObject",
+        "properties": {
+            "success": {"dataType":"boolean","required":true},
+            "message": {"dataType":"string","required":true},
+            "data": {"dataType":"any"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "StatutAnalyse": {
         "dataType": "refEnum",
-        "enums": ["present","retard","absent","sortie_anticipee","present_avec_retard","en_conge"],
+        "enums": ["present","retard","absent","sortie_anticipee","present_avec_retard","en_conge","EN_REPOS"],
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"matricule":{"dataType":"string","required":true},"date":{"dataType":"datetime","required":true},"heure_prevue_arrivee":{"dataType":"string"},"heure_prevue_depart":{"dataType":"string"},"heure_reelle_arrivee":{"dataType":"string"},"heure_reelle_depart":{"dataType":"string"},"retard_minutes":{"dataType":"double","required":true},"sortie_anticipee_minutes":{"dataType":"double","required":true},"statut_final":{"ref":"StatutAnalyse","required":true},"travaille_aujourd_hui":{"dataType":"boolean","required":true},"commentaire":{"dataType":"string"},"mode_pointage":{"ref":"ModePointage"},"lieu_pointage":{"dataType":"string"},"cycle_travail_debut":{"dataType":"datetime"},"cycle_travail_fin":{"dataType":"datetime"},"est_equipe_nuit":{"dataType":"boolean"}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "AnalyseCreationParams": {
+        "dataType": "refAlias",
+        "type": {"ref":"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AnalyseOutput": {
@@ -499,39 +571,22 @@ const models: TsoaRoute.Models = {
             "mode_pointage": {"ref":"ModePointage"},
             "lieu_pointage": {"dataType":"string"},
             "date_analyse": {"dataType":"datetime","required":true},
+            "cycle_travail_debut": {"dataType":"datetime"},
+            "cycle_travail_fin": {"dataType":"datetime"},
+            "est_equipe_nuit": {"dataType":"boolean"},
             "user": {"dataType":"nestedObjectLiteral","nestedProperties":{"lieu":{"dataType":"nestedObjectLiteral","nestedProperties":{"lieu":{"dataType":"string","required":true},"id_lieu":{"dataType":"double","required":true}}},"departement":{"dataType":"nestedObjectLiteral","nestedProperties":{"departement":{"dataType":"string","required":true},"id_departement":{"dataType":"double","required":true}}},"equipe":{"dataType":"nestedObjectLiteral","nestedProperties":{"equipe":{"dataType":"string","required":true},"id_equipe":{"dataType":"double","required":true}}},"poste":{"dataType":"string","required":true},"prenom":{"dataType":"string","required":true},"nom":{"dataType":"string","required":true},"matricule":{"dataType":"string","required":true},"id_user":{"dataType":"double","required":true}}},
         },
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "AnalyseValidationResult": {
-        "dataType": "refObject",
-        "properties": {
-            "success": {"dataType":"boolean","required":true},
-            "message": {"dataType":"string","required":true},
-            "data": {"dataType":"any"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage_": {
+    "Partial_Pick_IAnalyse.justifie-or-commentaire-or-statut_final-or-mode_pointage__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"matricule":{"dataType":"string","required":true},"date":{"dataType":"datetime","required":true},"heure_prevue_arrivee":{"dataType":"string"},"heure_prevue_depart":{"dataType":"string"},"heure_reelle_arrivee":{"dataType":"string"},"heure_reelle_depart":{"dataType":"string"},"retard_minutes":{"dataType":"double","required":true},"sortie_anticipee_minutes":{"dataType":"double","required":true},"statut_final":{"ref":"StatutAnalyse","required":true},"travaille_aujourd_hui":{"dataType":"boolean","required":true},"commentaire":{"dataType":"string"},"mode_pointage":{"ref":"ModePointage"},"lieu_pointage":{"dataType":"string"}},"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "AnalyseCreationParams": {
-        "dataType": "refAlias",
-        "type": {"ref":"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage_","validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Partial_Pick_IAnalyse.justifie-or-commentaire__": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"commentaire":{"dataType":"string"},"justifie":{"dataType":"boolean"}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"statut_final":{"ref":"StatutAnalyse"},"commentaire":{"dataType":"string"},"mode_pointage":{"ref":"ModePointage"},"justifie":{"dataType":"boolean"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AnalyseUpdateParams": {
         "dataType": "refAlias",
-        "type": {"ref":"Partial_Pick_IAnalyse.justifie-or-commentaire__","validators":{}},
+        "type": {"ref":"Partial_Pick_IAnalyse.justifie-or-commentaire-or-statut_final-or-mode_pointage__","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 };
@@ -616,7 +671,7 @@ export function RegisterRoutes(app: Router) {
         const argsUserController_getAllUsers: Record<string, TsoaRoute.ParameterSchema> = {
         };
         app.get('/users',
-            authenticateMiddleware([{"jwt":["admin","RH"]}]),
+            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(UserController)),
             ...(fetchMiddlewares<RequestHandler>(UserController.prototype.getAllUsers)),
 
@@ -648,7 +703,7 @@ export function RegisterRoutes(app: Router) {
                 requestBody: {"in":"body","name":"requestBody","required":true,"ref":"UserUpdateParams"},
         };
         app.put('/users/:id',
-            authenticateMiddleware([{"jwt":["admin","RH"]}]),
+            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(UserController)),
             ...(fetchMiddlewares<RequestHandler>(UserController.prototype.updateUser)),
 
@@ -680,7 +735,7 @@ export function RegisterRoutes(app: Router) {
                 requestBody: {"in":"body","name":"requestBody","required":true,"ref":"UserUpdateParams"},
         };
         app.patch('/users/:id',
-            authenticateMiddleware([{"jwt":["admin","RH"]}]),
+            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(UserController)),
             ...(fetchMiddlewares<RequestHandler>(UserController.prototype.updateUserBase)),
 
@@ -2065,6 +2120,192 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsJourFerieController_getJourFerie: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.get('/jours-feries/:id',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController)),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController.prototype.getJourFerie)),
+
+            async function JourFerieController_getJourFerie(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsJourFerieController_getJourFerie, request, response });
+
+                const controller = new JourFerieController();
+
+              await templateService.apiHandler({
+                methodName: 'getJourFerie',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsJourFerieController_createJourFerie: Record<string, TsoaRoute.ParameterSchema> = {
+                requestBody: {"in":"body","name":"requestBody","required":true,"ref":"JourFerieCreateParams"},
+        };
+        app.post('/jours-feries',
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController)),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController.prototype.createJourFerie)),
+
+            async function JourFerieController_createJourFerie(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsJourFerieController_createJourFerie, request, response });
+
+                const controller = new JourFerieController();
+
+              await templateService.apiHandler({
+                methodName: 'createJourFerie',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsJourFerieController_getAllJoursFeries: Record<string, TsoaRoute.ParameterSchema> = {
+        };
+        app.get('/jours-feries',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController)),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController.prototype.getAllJoursFeries)),
+
+            async function JourFerieController_getAllJoursFeries(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsJourFerieController_getAllJoursFeries, request, response });
+
+                const controller = new JourFerieController();
+
+              await templateService.apiHandler({
+                methodName: 'getAllJoursFeries',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsJourFerieController_updateJourFerie: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                requestBody: {"in":"body","name":"requestBody","required":true,"ref":"JourFerieUpdateParams"},
+        };
+        app.put('/jours-feries/:id',
+            authenticateMiddleware([{"jwt":["admin","RH"]}]),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController)),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController.prototype.updateJourFerie)),
+
+            async function JourFerieController_updateJourFerie(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsJourFerieController_updateJourFerie, request, response });
+
+                const controller = new JourFerieController();
+
+              await templateService.apiHandler({
+                methodName: 'updateJourFerie',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsJourFerieController_deleteJourFerie: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.delete('/jours-feries/:id',
+            authenticateMiddleware([{"jwt":["admin","RH"]}]),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController)),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController.prototype.deleteJourFerie)),
+
+            async function JourFerieController_deleteJourFerie(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsJourFerieController_deleteJourFerie, request, response });
+
+                const controller = new JourFerieController();
+
+              await templateService.apiHandler({
+                methodName: 'deleteJourFerie',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsJourFerieController_getJoursFeriesByPeriode: Record<string, TsoaRoute.ParameterSchema> = {
+                dateDebut: {"in":"query","name":"dateDebut","required":true,"dataType":"string"},
+                dateFin: {"in":"query","name":"dateFin","required":true,"dataType":"string"},
+        };
+        app.get('/jours-feries/periode',
+            authenticateMiddleware([{"jwt":[]}]),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController)),
+            ...(fetchMiddlewares<RequestHandler>(JourFerieController.prototype.getJoursFeriesByPeriode)),
+
+            async function JourFerieController_getJoursFeriesByPeriode(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsJourFerieController_getJoursFeriesByPeriode, request, response });
+
+                const controller = new JourFerieController();
+
+              await templateService.apiHandler({
+                methodName: 'getJoursFeriesByPeriode',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsEquipeController_getEquipe: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
         };
@@ -2894,37 +3135,6 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsAnalyseController_getAnalyse: Record<string, TsoaRoute.ParameterSchema> = {
-                id: {"in":"path","name":"id","required":true,"dataType":"double"},
-        };
-        app.get('/analyses/:id',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalyse)),
-
-            async function AnalyseController_getAnalyse(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getAnalyse, request, response });
-
-                const controller = new AnalyseController();
-
-              await templateService.apiHandler({
-                methodName: 'getAnalyse',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAnalyseController_createAnalyse: Record<string, TsoaRoute.ParameterSchema> = {
                 requestBody: {"in":"body","name":"requestBody","required":true,"ref":"AnalyseCreationParams"},
         };
@@ -2959,7 +3169,6 @@ export function RegisterRoutes(app: Router) {
         const argsAnalyseController_getAllAnalyses: Record<string, TsoaRoute.ParameterSchema> = {
         };
         app.get('/analyses',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAllAnalyses)),
 
@@ -3053,7 +3262,6 @@ export function RegisterRoutes(app: Router) {
                 date: {"in":"path","name":"date","required":true,"dataType":"string"},
         };
         app.get('/analyses/date/:date',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalysesByDate)),
 
@@ -3084,7 +3292,6 @@ export function RegisterRoutes(app: Router) {
                 matricule: {"in":"path","name":"matricule","required":true,"dataType":"string"},
         };
         app.get('/analyses/matricule/:matricule',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalysesByMatricule)),
 
@@ -3116,7 +3323,6 @@ export function RegisterRoutes(app: Router) {
                 date: {"in":"query","name":"date","dataType":"string"},
         };
         app.get('/analyses/statut/:statut',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalysesByStatut)),
 
@@ -3147,7 +3353,6 @@ export function RegisterRoutes(app: Router) {
                 body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"date":{"dataType":"string","required":true}}},
         };
         app.post('/analyses/analyser-journee',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.analyserJournee)),
 
@@ -3177,7 +3382,6 @@ export function RegisterRoutes(app: Router) {
         const argsAnalyseController_analyserAujourdhui: Record<string, TsoaRoute.ParameterSchema> = {
         };
         app.post('/analyses/analyser-aujourdhui',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.analyserAujourdhui)),
 
@@ -3301,7 +3505,6 @@ export function RegisterRoutes(app: Router) {
                 date: {"in":"path","name":"date","required":true,"dataType":"string"},
         };
         app.get('/analyses/statistiques/:date',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getStatistiquesJour)),
 
@@ -3396,7 +3599,6 @@ export function RegisterRoutes(app: Router) {
         const argsAnalyseController_getDashboardAujourdhui: Record<string, TsoaRoute.ParameterSchema> = {
         };
         app.get('/analyses/dashboard-aujourdhui',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getDashboardAujourdhui)),
 
@@ -3426,7 +3628,6 @@ export function RegisterRoutes(app: Router) {
         const argsAnalyseController_getDashboardTempsReel: Record<string, TsoaRoute.ParameterSchema> = {
         };
         app.get('/analyses/dashboard-temps-reel',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getDashboardTempsReel)),
 
@@ -3458,7 +3659,6 @@ export function RegisterRoutes(app: Router) {
                 dateFin: {"in":"query","name":"dateFin","required":true,"dataType":"string"},
         };
         app.get('/analyses/rapport-periode',
-            authenticateMiddleware([{"jwt":["admin","RH"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getRapportPeriode)),
 
@@ -3490,7 +3690,6 @@ export function RegisterRoutes(app: Router) {
                 mois: {"in":"path","name":"mois","required":true,"dataType":"double"},
         };
         app.get('/analyses/rapport-mensuel/:annee/:mois',
-            authenticateMiddleware([{"jwt":["admin","RH"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getRapportMensuel)),
 
@@ -3521,7 +3720,6 @@ export function RegisterRoutes(app: Router) {
                 body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"dateFin":{"dataType":"string","required":true},"dateDebut":{"dataType":"string","required":true}}},
         };
         app.post('/analyses/recalculer-periode',
-            authenticateMiddleware([{"jwt":["admin"]}]),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
             ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.recalculerPeriode)),
 
@@ -3579,6 +3777,36 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAnalyseController_getEmployesEnRepos: Record<string, TsoaRoute.ParameterSchema> = {
+                date: {"in":"path","name":"date","required":true,"dataType":"string"},
+        };
+        app.get('/analyses/en-repos/:date',
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getEmployesEnRepos)),
+
+            async function AnalyseController_getEmployesEnRepos(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getEmployesEnRepos, request, response });
+
+                const controller = new AnalyseController();
+
+              await templateService.apiHandler({
+                methodName: 'getEmployesEnRepos',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAnalyseController_exportCsv: Record<string, TsoaRoute.ParameterSchema> = {
                 date: {"in":"path","name":"date","required":true,"dataType":"string"},
         };
@@ -3599,6 +3827,37 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'exportCsv',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAnalyseController_getAnalyse: Record<string, TsoaRoute.ParameterSchema> = {
+                id: {"in":"path","name":"id","required":true,"dataType":"double"},
+        };
+        app.get('/analyses/:id',
+            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalyse)),
+
+            async function AnalyseController_getAnalyse(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getAnalyse, request, response });
+
+                const controller = new AnalyseController();
+
+              await templateService.apiHandler({
+                methodName: 'getAnalyse',
                 controller,
                 response,
                 next,

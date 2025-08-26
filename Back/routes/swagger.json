@@ -1012,6 +1012,106 @@
 			"LieuUpdateParams": {
 				"$ref": "#/components/schemas/Partial_LieuCreationParams_"
 			},
+			"JourFerieOutput": {
+				"properties": {
+					"id_jourferie": {
+						"type": "number",
+						"format": "double"
+					},
+					"nom": {
+						"type": "string"
+					},
+					"date": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"recurrent": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"id_jourferie",
+					"nom",
+					"date",
+					"recurrent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"JourFerieResult": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"message": {
+						"type": "string"
+					},
+					"data": {}
+				},
+				"required": [
+					"success",
+					"message"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"JourFerieCreateParams": {
+				"properties": {
+					"nom": {
+						"type": "string"
+					},
+					"date": {
+						"anyOf": [
+							{
+								"type": "string",
+								"format": "date-time"
+							},
+							{
+								"type": "string"
+							}
+						]
+					},
+					"recurrent": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"nom",
+					"date"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"JourFerieUpdateParams": {
+				"properties": {
+					"nom": {
+						"type": "string"
+					},
+					"date": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "string",
+								"format": "date-time"
+							}
+						]
+					},
+					"recurrent": {
+						"type": "boolean"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			},
 			"IEquipe": {
 				"properties": {
 					"id_equipe": {
@@ -1111,6 +1211,14 @@
 				],
 				"type": "string"
 			},
+			"StatutConge": {
+				"enum": [
+					"ATTENTE",
+					"VALIDE",
+					"REFUSE"
+				],
+				"type": "string"
+			},
 			"CongeOutput": {
 				"properties": {
 					"id_conge": {
@@ -1158,6 +1266,9 @@
 					},
 					"personne_interim": {
 						"type": "string"
+					},
+					"statut": {
+						"$ref": "#/components/schemas/StatutConge"
 					},
 					"user": {
 						"properties": {
@@ -1271,6 +1382,9 @@
 					},
 					"personne_interim": {
 						"type": "string"
+					},
+					"statut": {
+						"$ref": "#/components/schemas/StatutConge"
 					}
 				},
 				"required": [
@@ -1328,6 +1442,9 @@
 					},
 					"personne_interim": {
 						"type": "string"
+					},
+					"statut": {
+						"$ref": "#/components/schemas/StatutConge"
 					}
 				},
 				"type": "object",
@@ -1374,6 +1491,10 @@
 					},
 					"role": {
 						"$ref": "#/components/schemas/Role"
+					},
+					"id_departement": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -1381,7 +1502,8 @@
 					"matricule",
 					"nom",
 					"email",
-					"role"
+					"role",
+					"id_departement"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1407,6 +1529,23 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"AnalyseValidationResult": {
+				"properties": {
+					"success": {
+						"type": "boolean"
+					},
+					"message": {
+						"type": "string"
+					},
+					"data": {}
+				},
+				"required": [
+					"success",
+					"message"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"StatutAnalyse": {
 				"enum": [
 					"present",
@@ -1414,9 +1553,80 @@
 					"absent",
 					"sortie_anticipee",
 					"present_avec_retard",
-					"en_conge"
+					"en_conge",
+					"EN_REPOS"
 				],
 				"type": "string"
+			},
+			"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_": {
+				"properties": {
+					"matricule": {
+						"type": "string"
+					},
+					"date": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"heure_prevue_arrivee": {
+						"type": "string"
+					},
+					"heure_prevue_depart": {
+						"type": "string"
+					},
+					"heure_reelle_arrivee": {
+						"type": "string"
+					},
+					"heure_reelle_depart": {
+						"type": "string"
+					},
+					"retard_minutes": {
+						"type": "number",
+						"format": "double"
+					},
+					"sortie_anticipee_minutes": {
+						"type": "number",
+						"format": "double"
+					},
+					"statut_final": {
+						"$ref": "#/components/schemas/StatutAnalyse"
+					},
+					"travaille_aujourd_hui": {
+						"type": "boolean"
+					},
+					"commentaire": {
+						"type": "string"
+					},
+					"mode_pointage": {
+						"$ref": "#/components/schemas/ModePointage"
+					},
+					"lieu_pointage": {
+						"type": "string"
+					},
+					"cycle_travail_debut": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"cycle_travail_fin": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"est_equipe_nuit": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"matricule",
+					"date",
+					"retard_minutes",
+					"sortie_anticipee_minutes",
+					"statut_final",
+					"travaille_aujourd_hui"
+				],
+				"type": "object",
+				"description": "From T, pick a set of properties whose keys are in the union K"
+			},
+			"AnalyseCreationParams": {
+				"$ref": "#/components/schemas/Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_"
 			},
 			"AnalyseOutput": {
 				"properties": {
@@ -1472,6 +1682,17 @@
 					"date_analyse": {
 						"type": "string",
 						"format": "date-time"
+					},
+					"cycle_travail_debut": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"cycle_travail_fin": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"est_equipe_nuit": {
+						"type": "boolean"
 					},
 					"user": {
 						"properties": {
@@ -1564,86 +1785,16 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"AnalyseValidationResult": {
+			"Partial_Pick_IAnalyse.justifie-or-commentaire-or-statut_final-or-mode_pointage__": {
 				"properties": {
-					"success": {
-						"type": "boolean"
-					},
-					"message": {
-						"type": "string"
-					},
-					"data": {}
-				},
-				"required": [
-					"success",
-					"message"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage_": {
-				"properties": {
-					"matricule": {
-						"type": "string"
-					},
-					"date": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"heure_prevue_arrivee": {
-						"type": "string"
-					},
-					"heure_prevue_depart": {
-						"type": "string"
-					},
-					"heure_reelle_arrivee": {
-						"type": "string"
-					},
-					"heure_reelle_depart": {
-						"type": "string"
-					},
-					"retard_minutes": {
-						"type": "number",
-						"format": "double"
-					},
-					"sortie_anticipee_minutes": {
-						"type": "number",
-						"format": "double"
-					},
 					"statut_final": {
 						"$ref": "#/components/schemas/StatutAnalyse"
-					},
-					"travaille_aujourd_hui": {
-						"type": "boolean"
 					},
 					"commentaire": {
 						"type": "string"
 					},
 					"mode_pointage": {
 						"$ref": "#/components/schemas/ModePointage"
-					},
-					"lieu_pointage": {
-						"type": "string"
-					}
-				},
-				"required": [
-					"matricule",
-					"date",
-					"retard_minutes",
-					"sortie_anticipee_minutes",
-					"statut_final",
-					"travaille_aujourd_hui"
-				],
-				"type": "object",
-				"description": "From T, pick a set of properties whose keys are in the union K"
-			},
-			"AnalyseCreationParams": {
-				"$ref": "#/components/schemas/Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage_"
-			},
-			"Partial_Pick_IAnalyse.justifie-or-commentaire__": {
-				"properties": {
-					"commentaire": {
-						"type": "string"
 					},
 					"justifie": {
 						"type": "boolean"
@@ -1653,7 +1804,7 @@
 				"description": "Make all properties in T optional"
 			},
 			"AnalyseUpdateParams": {
-				"$ref": "#/components/schemas/Partial_Pick_IAnalyse.justifie-or-commentaire__"
+				"$ref": "#/components/schemas/Partial_Pick_IAnalyse.justifie-or-commentaire-or-statut_final-or-mode_pointage__"
 			}
 		},
 		"securitySchemes": {}
@@ -1723,7 +1874,8 @@
 					{
 						"jwt": [
 							"admin",
-							"RH"
+							"RH",
+							"superviseur"
 						]
 					}
 				],
@@ -1770,7 +1922,8 @@
 					{
 						"jwt": [
 							"admin",
-							"RH"
+							"RH",
+							"superviseur"
 						]
 					}
 				],
@@ -1895,7 +2048,8 @@
 					{
 						"jwt": [
 							"admin",
-							"RH"
+							"RH",
+							"superviseur"
 						]
 					}
 				],
@@ -2117,6 +2271,10 @@
 							"application/json": {
 								"schema": {
 									"properties": {
+										"pointeusesProcessed": {
+											"type": "number",
+											"format": "double"
+										},
 										"errors": {
 											"items": {
 												"type": "string"
@@ -2759,6 +2917,10 @@
 							"application/json": {
 								"schema": {
 									"properties": {
+										"pointeusesProcessed": {
+											"type": "number",
+											"format": "double"
+										},
 										"errors": {
 											"items": {
 												"type": "string"
@@ -2811,6 +2973,10 @@
 							"application/json": {
 								"schema": {
 									"properties": {
+										"pointeusesProcessed": {
+											"type": "number",
+											"format": "double"
+										},
 										"errors": {
 											"items": {
 												"type": "string"
@@ -3713,6 +3879,231 @@
 				],
 				"security": [],
 				"parameters": []
+			}
+		},
+		"/jours-feries/{id}": {
+			"get": {
+				"operationId": "GetJourFerie",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/JourFerieOutput"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"JourFerie"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "UpdateJourFerie",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/JourFerieResult"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"JourFerie"
+				],
+				"security": [
+					{
+						"jwt": [
+							"admin",
+							"RH"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/JourFerieUpdateParams"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteJourFerie",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/JourFerieResult"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"JourFerie"
+				],
+				"security": [
+					{
+						"jwt": [
+							"admin",
+							"RH"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/jours-feries": {
+			"post": {
+				"operationId": "CreateJourFerie",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/JourFerieResult"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"JourFerie"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/JourFerieCreateParams"
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "GetAllJoursFeries",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/JourFerieOutput"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"JourFerie"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": []
+			}
+		},
+		"/jours-feries/periode": {
+			"get": {
+				"operationId": "GetJoursFeriesByPeriode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/JourFerieOutput"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"JourFerie"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "dateDebut",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "dateFin",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/equipes/{id}": {
@@ -4733,16 +5124,16 @@
 				"parameters": []
 			}
 		},
-		"/analyses/{id}": {
-			"get": {
-				"operationId": "GetAnalyse",
+		"/analyses": {
+			"post": {
+				"operationId": "CreateAnalyse",
 				"responses": {
 					"200": {
 						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/AnalyseOutput"
+									"$ref": "#/components/schemas/AnalyseValidationResult"
 								}
 							}
 						}
@@ -4755,23 +5146,47 @@
 					{
 						"jwt": [
 							"admin",
-							"RH",
-							"superviseur"
+							"RH"
 						]
 					}
 				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/AnalyseCreationParams"
+							}
 						}
 					}
-				]
+				}
 			},
+			"get": {
+				"operationId": "GetAllAnalyses",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/AnalyseOutput"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Analyse"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/analyses/{id}": {
 			"put": {
 				"operationId": "UpdateAnalyse",
 				"responses": {
@@ -4854,58 +5269,16 @@
 						}
 					}
 				]
-			}
-		},
-		"/analyses": {
-			"post": {
-				"operationId": "CreateAnalyse",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/AnalyseValidationResult"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Analyse"
-				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH"
-						]
-					}
-				],
-				"parameters": [],
-				"requestBody": {
-					"required": true,
-					"content": {
-						"application/json": {
-							"schema": {
-								"$ref": "#/components/schemas/AnalyseCreationParams"
-							}
-						}
-					}
-				}
 			},
 			"get": {
-				"operationId": "GetAllAnalyses",
+				"operationId": "GetAnalyse",
 				"responses": {
 					"200": {
 						"description": "Ok",
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/AnalyseOutput"
-									},
-									"type": "array"
+									"$ref": "#/components/schemas/AnalyseOutput"
 								}
 							}
 						}
@@ -4923,7 +5296,17 @@
 						]
 					}
 				],
-				"parameters": []
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
 			}
 		},
 		"/analyses/date/{date}": {
@@ -4947,15 +5330,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH",
-							"superviseur"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -4989,15 +5364,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH",
-							"superviseur"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -5031,15 +5398,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH",
-							"superviseur"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -5078,15 +5437,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH",
-							"superviseur"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -5126,15 +5477,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH",
-							"superviseur"
-						]
-					}
-				],
+				"security": [],
 				"parameters": []
 			}
 		},
@@ -5292,15 +5635,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH",
-							"superviseur"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -5493,15 +5828,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH",
-							"superviseur"
-						]
-					}
-				],
+				"security": [],
 				"parameters": []
 			}
 		},
@@ -5563,15 +5890,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH",
-							"superviseur"
-						]
-					}
-				],
+				"security": [],
 				"parameters": []
 			}
 		},
@@ -5620,14 +5939,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "query",
@@ -5693,14 +6005,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [
 					{
 						"in": "path",
@@ -5741,13 +6046,7 @@
 				"tags": [
 					"Analyse"
 				],
-				"security": [
-					{
-						"jwt": [
-							"admin"
-						]
-					}
-				],
+				"security": [],
 				"parameters": [],
 				"requestBody": {
 					"required": true,
@@ -5806,6 +6105,40 @@
 						"schema": {
 							"format": "double",
 							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/analyses/en-repos/{date}": {
+			"get": {
+				"operationId": "GetEmployesEnRepos",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/AnalyseOutput"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Analyse"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "date",
+						"required": true,
+						"schema": {
+							"type": "string"
 						}
 					}
 				]

@@ -8,7 +8,9 @@ import {
   Typography, 
   Paper, 
   CircularProgress,
-  useTheme
+  useTheme,
+  alpha,
+  darken
 } from '@mui/material';
 import { Lock as LockIcon } from '@mui/icons-material';
 import axiosInstance from '../config/axiosConfig';
@@ -21,6 +23,12 @@ export default function LoginPage() {
   const theme = useTheme();
   const navigate = useNavigate();
   const { login } = useAuth();
+  
+  // Configuration des couleurs cohérentes avec SideBar et AppBar
+  const green = theme.palette.success.main;
+  const base = darken(green, 0.45);
+  const mid = darken(green, 0.55);
+  const deep = darken(green, 0.7);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -31,10 +39,9 @@ export default function LoginPage() {
       // Post-connexion
       localStorage.setItem('authToken', data.token);
       setInstanceTokens(data.token);
-      login();
+      login(data.user);
       toast.success(`Bienvenue ${data.user.prenom} !`, {
         autoClose: 2000,
-      
       });
       navigate('/dashboard')
       
@@ -57,7 +64,14 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: `linear-gradient(135deg, ${theme.palette.primary.light} 0%, ${theme.palette.primary.dark} 100%)`,
+        backgroundColor: 'transparent',
+        backgroundImage: `
+          repeating-linear-gradient(115deg, ${alpha('#ffffff', 0.06)} 0 1px, transparent 1px 6px),
+          repeating-radial-gradient(circle at 30% 15%, ${alpha('#000', 0.12)} 0 1px, transparent 1px 5px),
+          linear-gradient(180deg, ${alpha('#ffffff', 0.05)} 0%, ${alpha('#ffffff', 0)} 40%),
+          linear-gradient(135deg, ${base} 0%, ${mid} 45%, ${deep} 100%)
+        `,
+        backgroundBlendMode: 'overlay, overlay, screen, normal',
         p: 2
       }}
     >
@@ -73,7 +87,14 @@ export default function LoginPage() {
         {/* Section Texte de Bienvenue */}
         <Box sx={{
           flex: 1,
-          backgroundColor: theme.palette.primary.main,
+          backgroundColor: 'transparent',
+          backgroundImage: `
+            repeating-radial-gradient(circle at 20% 50%, ${alpha('#000', 0.12)} 0 1px, transparent 1px 4px),
+            repeating-radial-gradient(circle at 80% 50%, ${alpha('#000', 0.1)} 0 1px, transparent 1px 4px),
+            linear-gradient(135deg, ${alpha('#ffffff', 0.08)} 0%, ${alpha('#ffffff', 0)} 40%),
+            linear-gradient(90deg, ${base} 0%, ${mid} 50%, ${deep} 100%)
+          `,
+          backgroundBlendMode: 'overlay, overlay, screen, normal',
           color: 'white',
           p: 6,
           display: 'flex',
@@ -116,7 +137,7 @@ export default function LoginPage() {
                 fontSize: 40, 
                 mb: 2 
               }} />
-              <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h4"  sx={{ fontWeight: 'bold' }}>
                 Connexion
               </Typography>
             </Box>
@@ -147,7 +168,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 variant="contained"
-                color="primary"
+                color="success"
                 fullWidth
                 size="large"
                 disabled={loading}

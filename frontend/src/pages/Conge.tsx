@@ -18,17 +18,23 @@ import {
   Autocomplete,
   DialogActions,
   Alert,
-  Chip
+  Chip,
+  Tooltip,
+  IconButton,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import { useTheme, alpha } from '@mui/material/styles';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import axiosInstance from '../config/axiosConfig';
 import { toast } from 'react-toastify';
+import { useAuth } from '../config/authConfig';
 
 // Types basés sur votre structure de congé
 const TypeConge = {
@@ -42,6 +48,15 @@ const TypeConge = {
 
 type TypeCongeValue = typeof TypeConge[keyof typeof TypeConge];
 
+// Enum pour le statut de congé
+const StatutConge = {
+  ATTENTE: "ATTENTE",
+  VALIDE: "VALIDE",
+  REFUSE: "REFUSE"
+} as const;
+
+type StatutCongeValue = typeof StatutConge[keyof typeof StatutConge];
+
 type Conge = {
   id_conge: number;
   matricule: string;
@@ -52,6 +67,7 @@ type Conge = {
   date_depart: string;
   date_reprise: string;
   personne_interim?: string;
+  statut: StatutCongeValue;
   // Relations
   user?: {
     id_user: number;
@@ -60,6 +76,7 @@ type Conge = {
     prenom: string;
     poste: string;
     role: string;
+    id_departement: number;
   };
 };
 
@@ -72,6 +89,7 @@ type CongeFormData = {
   date_depart: string;
   date_reprise: string;
   personne_interim?: string;
+  statut?: StatutCongeValue;
 };
 
 const style = {
@@ -101,6 +119,9 @@ const deleteStyle = {
 };
 
 const Conges = () => {
+  const theme = useTheme();
+  const green = theme.palette.success.main;
+  const { user, hasRole } = useAuth();
   const [data, setData] = useState<Conge[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,7 +148,8 @@ const Conges = () => {
     nbr_jours_permis: 0,
     date_depart: '',
     date_reprise: '',
-    personne_interim: ''
+    personne_interim: '',
+          statut: hasRole('Admin') || hasRole('RH') || hasRole('Superviseur') ? StatutConge.VALIDE : StatutConge.ATTENTE
   });
 
   const handleOpenDelete = (conge: Conge) => {
@@ -150,7 +172,8 @@ const Conges = () => {
       nbr_jours_permis: conge.nbr_jours_permis,
       date_depart: conge.date_depart.split('T')[0],
       date_reprise: conge.date_reprise.split('T')[0],
-      personne_interim: conge.personne_interim || ''
+      personne_interim: conge.personne_interim || '',
+      statut: conge.statut
     });
     setOpenEdit(true);
   };
@@ -173,15 +196,53 @@ const Conges = () => {
 
   const resetForm = () => {
     setFormData({
-      matricule: '',
+      matricule: hasRole('Employe') ? (user?.matricule || '') : '',
       motif: '',
       type: TypeConge.ANNUEL,
       solde_conge:0,
       nbr_jours_permis: 0,
       date_depart: '',
       date_reprise: '',
-      personne_interim: ''
+      personne_interim: '',
+      statut: hasRole('Admin') || hasRole('RH') || hasRole('Superviseur') ? StatutConge.VALIDE : StatutConge.ATTENTE
     });
+  };
+
+  // Fonctions de permissions simplifiées
+  const canCreate = () => {
+    return hasRole('Admin') || hasRole('RH') || hasRole('Superviseur') || hasRole('Employe');
+  };
+
+  const canEdit = (conge: Conge) => {
+    return hasRole('Admin') || hasRole('RH') || hasRole('Superviseur');
+  };
+
+  const canDelete = (conge: Conge) => {
+    return hasRole('Admin') || hasRole('RH') || hasRole('Superviseur');
+  };
+
+  const canValidate = () => {
+    return hasRole('Admin') || hasRole('RH') || hasRole('Superviseur');
+  };
+
+  // Fonction pour obtenir la couleur du statut
+  const getStatutColor = (statut: StatutCongeValue): "success" | "error" | "warning" => {
+    switch (statut) {
+      case StatutConge.VALIDE: return "success";
+      case StatutConge.REFUSE: return "error";
+      case StatutConge.ATTENTE: return "warning";
+      default: return "warning";
+    }
+  };
+
+  // Fonction pour obtenir le label du statut
+  const getStatutLabel = (statut: StatutCongeValue): string => {
+    switch (statut) {
+      case StatutConge.VALIDE: return "Validé";
+      case StatutConge.REFUSE: return "Refusé";
+      case StatutConge.ATTENTE: return "En attente";
+      default: return "En attente";
+    }
   };
 
   useEffect(() => {
@@ -192,8 +253,16 @@ const Conges = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const response = await axiosInstance.get('/conges');
+      let url = '/conges';
+      
+      // Les employés ne voient que leurs propres congés
+      if (hasRole('Employe') && user?.matricule) {
+        url = `/conges/matricule/${user.matricule}`;
+      }
+      
+      const response = await axiosInstance.get(url);
       setData(response.data);
+      console.log(response.data);
     } catch (err) {
       setError('Erreur lors du chargement des données de congé');
       console.error('Error fetching conge data:', err);
@@ -204,7 +273,15 @@ const Conges = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axiosInstance.get('/users');
+      let url = '/users';
+      
+      // Les employés ne peuvent créer des congés que pour eux-mêmes
+      if (hasRole('Employe') && user?.matricule) {
+        setEmployeeOptions([user.matricule]);
+        return;
+      }
+      
+      const response = await axiosInstance.get(url);
       const matricules = response.data.map((user: any) => user.matricule);
       setEmployeeOptions(matricules);
     } catch (err) {
@@ -374,19 +451,45 @@ const Conges = () => {
         header: 'Actions',
         size: 100,
         Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <button 
-              className='mx-1' 
-              onClick={() => handleOpenEdit(row.original)}
-            >
-              <EditIcon sx={{ color: 'green' }} />
-            </button>
-            <button 
-              className='mx-1' 
-              onClick={() => handleOpenDelete(row.original)}
-            >
-              <DeleteIcon sx={{ color: 'red' }} />
-            </button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {canEdit(row.original) && (
+              <Tooltip title="Modifier">
+                <IconButton
+                  size="small"
+                  onClick={() => handleOpenEdit(row.original)}
+                  sx={{
+                    color: green,
+                    bgcolor: alpha(green, 0.14),
+                    '&:hover': { 
+                      bgcolor: alpha(green, 0.22),
+                      transform: 'scale(1.05)'
+                    },
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {canDelete(row.original) && (
+              <Tooltip title="Supprimer">
+                <IconButton
+                  size="small"
+                  onClick={() => handleOpenDelete(row.original)}
+                  sx={{
+                    color: theme.palette.error.main,
+                    bgcolor: alpha(theme.palette.error.main, 0.12),
+                    '&:hover': { 
+                      bgcolor: alpha(theme.palette.error.main, 0.2),
+                      transform: 'scale(1.05)'
+                    },
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
         )
       },
@@ -400,6 +503,22 @@ const Conges = () => {
         header: 'Employé',
         size: 200,
         Cell: ({ row }) => `${row.original.user?.prenom || ''} ${row.original.user?.nom || ''}`,
+      },
+      {
+        accessorKey: 'statut',
+        header: 'Statut',
+        size: 120,
+        Cell: ({ cell }) => {
+          const statut = cell.getValue<StatutCongeValue>();
+          return (
+            <Chip
+              label={getStatutLabel(statut)}
+              color={getStatutColor(statut)}
+              size="small"
+              sx={{ fontWeight: 'bold' }}
+            />
+          );
+        },
       },
       {
         accessorKey: 'type',
@@ -446,7 +565,7 @@ const Conges = () => {
         accessorKey: 'user.poste',
         header: 'Poste',
         size: 150,
-      },
+      }
     ],
     []
   );
@@ -466,14 +585,16 @@ const Conges = () => {
     positionToolbarAlertBanner: 'bottom',
     renderTopToolbarCustomActions: ({ table }) => (
       <Box sx={{ display: 'flex', gap: '16px', padding: '8px', flexWrap: 'wrap' }}>
-        <Button
-          onClick={handleOpenCreate}
-          startIcon={<AddIcon />}
-          variant="contained"
-          color='success'
-        >
-          Nouveau Congé
-        </Button>
+        {canCreate() && (
+          <Button
+            onClick={handleOpenCreate}
+            startIcon={<AddIcon />}
+            variant="contained"
+            color='success'
+          >
+            Nouveau Congé
+          </Button>
+        )}
         <Button
           disabled={table.getPrePaginationRowModel().rows.length === 0}
           onClick={() => handleExportRows(table.getPrePaginationRowModel().rows)}
@@ -607,12 +728,21 @@ const Conges = () => {
             
             <Box sx={{ mt: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Autocomplete
-                  options={employeeOptions}
-                  value={formData.matricule}
-                  onChange={(_, newValue) => setFormData({...formData, matricule: newValue || ''})}
-                  renderInput={(params) => <TextField {...params} label="Matricule Employé" required />}
-                />
+                {hasRole('Employe') ? (
+                  <TextField
+                    fullWidth
+                    label="Matricule"
+                    value={formData.matricule}
+                    disabled
+                  />
+                ) : (
+                  <Autocomplete
+                    options={employeeOptions}
+                    value={formData.matricule}
+                    onChange={(_, newValue) => setFormData({...formData, matricule: newValue || ''})}
+                    renderInput={(params) => <TextField {...params} label="Matricule Employé" required />}
+                  />
+                )}
 
                 <Autocomplete
                   options={typeOptions}
@@ -664,6 +794,16 @@ const Conges = () => {
                   value={formData.personne_interim}
                   onChange={(e) => setFormData({...formData, personne_interim: e.target.value})}
                 />
+
+                {canValidate() && (
+                  <Autocomplete
+                    options={Object.values(StatutConge)}
+                    value={formData.statut || StatutConge.ATTENTE}
+                    onChange={(_, newValue) => setFormData({...formData, statut: newValue || StatutConge.ATTENTE})}
+                    renderInput={(params) => <TextField {...params} label="Statut du congé" required />}
+                    getOptionLabel={(option) => getStatutLabel(option)}
+                  />
+                )}
 
                 {!validateDates() && (
                   <Alert severity="error">
@@ -771,6 +911,16 @@ const Conges = () => {
                   value={formData.personne_interim}
                   onChange={(e) => setFormData({...formData, personne_interim: e.target.value})}
                 />
+
+                {canValidate() && (
+                  <Autocomplete
+                    options={Object.values(StatutConge)}
+                    value={formData.statut || StatutConge.ATTENTE}
+                    onChange={(_, newValue) => setFormData({...formData, statut: newValue || StatutConge.ATTENTE})}
+                    renderInput={(params) => <TextField {...params} label="Statut du congé" required />}
+                    getOptionLabel={(option) => getStatutLabel(option)}
+                  />
+                )}
 
                 {!validateDates() && (
                   <Alert severity="error">

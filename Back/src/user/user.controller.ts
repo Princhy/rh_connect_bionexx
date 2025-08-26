@@ -14,6 +14,7 @@ import {
 } from "tsoa";
 import { IUser, UserOutput} from "./user.interface";
 import { UserService, UserCreationParams, UserUpdateParams } from "./user.service";
+import { PointeuseService } from "../pointeuse/pointeuse.service";
 import { Role } from "../enum";
 import { TypeContrat } from "../enum";
 import bcrypt from "bcryptjs"; 
@@ -78,7 +79,7 @@ export class UserController extends Controller {
 
   // Récupérer tous les utilisateurs
   @Get()
-  @Security("jwt", ["admin", "RH"])
+  @Security("jwt", ["admin", "RH","superviseur"])
   public async getAllUsers(): Promise<UserOutput[]> {
     const users = await new UserService().getAllUsers();
  // Filtrer pour exclure les admins
@@ -87,7 +88,7 @@ export class UserController extends Controller {
 
   // Mettre à jour un utilisateur
   @Put("{id}")
-  @Security("jwt", ["admin", "RH"])
+  @Security("jwt", ["admin", "RH","superviseur"])
   public async updateUser(
     @Path() id: number,
     @Body() requestBody: UserUpdateParams
@@ -104,7 +105,7 @@ export class UserController extends Controller {
   }
    // Mettre à jour un utilisateur sans mot de passe
   @Patch("{id}")
-  @Security("jwt", ["admin", "RH"])
+  @Security("jwt", ["admin", "RH","superviseur"])
   public async updateUserBase(
     @Path() id: number,
     @Body() requestBody: UserUpdateParams
@@ -138,7 +139,8 @@ export class UserController extends Controller {
   @Get("departement/{departementId}")
   @Security("jwt",["admin", "RH","superviseur"])
   public async getUsersByDepartement(@Path() departementId: number): Promise<UserOutput[]> {
-    return new UserService().getUsersByDepartement(departementId);
+    const users = await new UserService().getUsersByDepartement(departementId);
+    return users.filter(user => user.role !== Role.Admin);
   }
 
   // Récupérer les utilisateurs par équipe
@@ -162,7 +164,7 @@ export class UserController extends Controller {
     return new UserService().getUsersByRole(role);
   }
   
-// Importation via API Hikvision avec PAGINATION COMPLÈTE
+// Importation via API Hikvision depuis TOUTES les pointeuses avec PAGINATION COMPLÈTE
 @Post("import-api")
 @Security("jwt", ["admin", "RH"])
 public async importFromApi(): Promise<{ 
@@ -170,24 +172,36 @@ public async importFromApi(): Promise<{
   count: number; 
   totalUsers?: number;
   errors?: string[];
+  pointeusesProcessed?: number;
 }> {
   try {
-    console.log("🔍 Début import API Hikvision avec pagination...");
+    console.log("🔍 Début import API Hikvision depuis toutes les pointeuses...");
 
-    // 1️⃣ Authentification Digest
+    // 1️⃣ Récupération de toutes les pointeuses
+    const pointeuseService = new PointeuseService();
+    const pointeuses = await pointeuseService.getAllPointeuses();
+    
+    if (pointeuses.length === 0) {
+      return {
+        success: false,
+        count: 0,
+        errors: ["Aucune pointeuse configurée dans la base de données"]
+      };
+    }
+
+    console.log(`📡 ${pointeuses.length} pointeuse(s) trouvée(s) dans la base de données`);
+
+    // 2️⃣ Authentification Digest
     const digestClient = new DigestFetch(
       process.env.API_USERNAME || "admin",
       process.env.API_PASSWORD || "12345"
     );
 
-    const url = "http://10.4.101.206/ISAPI/AccessControl/userInfo/Search?format=json";
-
-    let allUsers: any[] = [];
-    let createdCount = 0;
-    let totalMatches = 0;
-    let searchResultPosition = 0;
-    const maxResults = 100; // Taille de page
-    const errors: string[] = [];
+    let totalCreatedCount = 0;
+    let totalUsers = 0;
+    const allErrors: string[] = [];
+    let pointeusesProcessed = 0;
+    const processedMatricules = new Set<string>(); // Pour éviter les doublons entre pointeuses
 
     // ✅ Fonction pour convertir les dates au format MySQL
     const formatDateForMySQL = (isoDate: string): string => {
@@ -198,119 +212,151 @@ public async importFromApi(): Promise<{
       return date.toISOString().slice(0, 19).replace('T', ' ');
     };
 
-    // 2️⃣ BOUCLE DE PAGINATION
-    do {
-      console.log(`📡 Requête page - Position: ${searchResultPosition}, Max: ${maxResults}`);
+    // 3️⃣ TRAITEMENT DE CHAQUE POINTEUSE
+    for (const pointeuse of pointeuses) {
+      try {
+        console.log(`\n🔧 Traitement de la pointeuse: ${pointeuse.pointeuse} (${pointeuse.adresse_ip})`);
+        
+        const url = `http://${pointeuse.adresse_ip}/ISAPI/AccessControl/userInfo/Search?format=json`;
+        
+        let searchResultPosition = 0;
+        const maxResults = 100;
+        let pointeuseTotalMatches = 0;
+        let pointeuseCreatedCount = 0;
 
-      const body = {
-        UserInfoSearchCond: {
-          searchID: "1",
-          searchResultPosition: searchResultPosition,
-          maxResults: maxResults
-        }
-      };
+        // 4️⃣ BOUCLE DE PAGINATION POUR CETTE POINTEUSE
+        do {
+          console.log(`📡 Requête page - Pointeuse: ${pointeuse.pointeuse}, Position: ${searchResultPosition}, Max: ${maxResults}`);
 
-      const apiResponse = await digestClient.fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body)
-      });
+          const body = {
+            UserInfoSearchCond: {
+              searchID: "1",
+              searchResultPosition: searchResultPosition,
+              maxResults: maxResults
+            }
+          };
 
-      if (!apiResponse.ok) {
-        throw new Error(`HTTP ${apiResponse.status} - ${apiResponse.statusText}`);
-      }
+          const apiResponse = await digestClient.fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+          });
 
-      const data = await apiResponse.json();
-      
-      // 3️⃣ Vérification de la structure de réponse
-      if (!data?.UserInfoSearch) {
-        console.error("❌ Structure inattendue :", JSON.stringify(data, null, 2));
-        break;
-      }
+          if (!apiResponse.ok) {
+            const errorMsg = `❌ Erreur HTTP ${apiResponse.status} pour la pointeuse ${pointeuse.pointeuse} (${pointeuse.adresse_ip})`;
+            console.error(errorMsg);
+            allErrors.push(errorMsg);
+            break;
+          }
 
-      const { UserInfo, numOfMatches, totalMatches: total, responseStatusStrg } = data.UserInfoSearch;
-      
-      // Mise à jour du total
-      totalMatches = total;
-      
-      console.log(`📋 Page actuelle: ${numOfMatches} utilisateurs`);
-      console.log(`📊 Total dans l'API: ${totalMatches} utilisateurs`);
-      console.log(`🔄 Statut: ${responseStatusStrg}`);
+          const data = await apiResponse.json();
+          
+          // 5️⃣ Vérification de la structure de réponse
+          if (!data?.UserInfoSearch) {
+            console.error(`❌ Structure inattendue pour ${pointeuse.pointeuse}:`, JSON.stringify(data, null, 2));
+            break;
+          }
 
-      // 4️⃣ Traitement des utilisateurs de cette page
-      if (UserInfo && Array.isArray(UserInfo)) {
-        for (const user of UserInfo) {
-          try {
-            // Vérifier si déjà en base
-            const existing = await new UserService().getUserByMatricule(user.employeeNo);
-            if (existing) {
-              console.log(`⏩ Matricule ${user.employeeNo} déjà existant, ignoré.`);
-              continue;
+          const { UserInfo, numOfMatches, totalMatches: total, responseStatusStrg } = data.UserInfoSearch;
+          
+          pointeuseTotalMatches = total;
+          
+          console.log(`📋 Page actuelle: ${numOfMatches} utilisateurs`);
+          console.log(`📊 Total dans l'API: ${pointeuseTotalMatches} utilisateurs`);
+          console.log(`🔄 Statut: ${responseStatusStrg}`);
+
+          // 6️⃣ Traitement des utilisateurs de cette page
+          if (UserInfo && Array.isArray(UserInfo)) {
+            for (const user of UserInfo) {
+              try {
+                // Vérifier si le matricule a déjà été traité dans cette session
+                if (processedMatricules.has(user.employeeNo)) {
+                  console.log(`⏩ Matricule ${user.employeeNo} déjà traité dans une autre pointeuse, ignoré.`);
+                  continue;
+                }
+
+                // Vérifier si déjà en base
+                const existing = await new UserService().getUserByMatricule(user.employeeNo);
+                if (existing) {
+                  console.log(`⏩ Matricule ${user.employeeNo} déjà existant en base, ignoré.`);
+                  processedMatricules.add(user.employeeNo);
+                  continue;
+                }
+
+                // Mapping interne
+                const mappedUser = {
+                  matricule: user.employeeNo,
+                  nom: user.name.split(" ")[0] || "",
+                  prenom: user.name.split(" ").slice(1).join(" ") || "",
+                  email: `${user.employeeNo}@bionexx.com`,
+                  phone: "+261",
+                  badge: "",
+                  empreinte: "",
+                  poste: "À définir",
+                  type_contrat: TypeContrat.CDI,
+                  date_embauche: formatDateForMySQL(user.Valid?.beginTime || new Date().toISOString()),
+                  date_fin_contrat: formatDateForMySQL(user.Valid?.endTime || new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString()),
+                  id_lieu: pointeuse.id_lieu, // Utiliser le lieu de la pointeuse
+                  id_equipe: 1,
+                  id_departement: 1,
+                  role: Role.Employe,
+                  password: await bcrypt.hash("123456", 10)
+                };
+
+                // Insertion en base
+                await new UserService().createUser(mappedUser);
+                console.log(`✅ Utilisateur ${mappedUser.matricule} (${mappedUser.nom} ${mappedUser.prenom}) inséré depuis ${pointeuse.pointeuse}`);
+                pointeuseCreatedCount++;
+                totalCreatedCount++;
+                processedMatricules.add(user.employeeNo);
+
+              } catch (err) {
+                const errorMsg = `❌ Erreur insertion matricule ${user.employeeNo} (Pointeuse: ${pointeuse.pointeuse}): ${err}`;
+                console.error(errorMsg);
+                allErrors.push(errorMsg);
+              }
             }
 
-            // Mapping interne
-            const mappedUser = {
-              matricule: user.employeeNo,
-              nom: user.name.split(" ")[0] || "",
-              prenom: user.name.split(" ").slice(1).join(" ") || "",
-              email: `${user.employeeNo}@bionexx.com`,
-              phone: "+261",
-              badge: "",
-              empreinte: "",
-              poste: "À définir",
-              type_contrat: TypeContrat.CDI,
-              date_embauche: formatDateForMySQL(user.Valid?.beginTime || new Date().toISOString()),
-              date_fin_contrat: formatDateForMySQL(user.Valid?.endTime || new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000).toISOString()),
-              id_lieu: 1,
-              id_equipe: 1,
-              id_departement: 1,
-              role: Role.Employe,
-              password: await bcrypt.hash("123456", 10)
-            };
-
-            // Insertion en base
-            await new UserService().createUser(mappedUser);
-            console.log(`✅ Utilisateur ${mappedUser.matricule} (${mappedUser.nom} ${mappedUser.prenom}) inséré`);
-            createdCount++;
-
-          } catch (err) {
-            const errorMsg = `❌ Erreur insertion matricule ${user.employeeNo}: ${err}`;
-            console.error(errorMsg);
-            errors.push(errorMsg);
+            // 7️⃣ Mise à jour de la position pour la page suivante
+            searchResultPosition += numOfMatches;
           }
-        }
 
-        // 5️⃣ Mise à jour de la position pour la page suivante
-        searchResultPosition += numOfMatches;
-        allUsers.push(...UserInfo);
+          // 8️⃣ Conditions d'arrêt pour cette pointeuse
+          if (responseStatusStrg === "OK" || searchResultPosition >= pointeuseTotalMatches) {
+            console.log(`🏁 Toutes les pages ont été récupérées pour ${pointeuse.pointeuse}`);
+            break;
+          }
+
+          // Petite pause entre les requêtes pour éviter de surcharger l'API
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+        } while (true);
+
+        console.log(`✅ Pointeuse ${pointeuse.pointeuse} traitée: ${pointeuseCreatedCount} utilisateurs créés`);
+        pointeusesProcessed++;
+        totalUsers += pointeuseTotalMatches;
+
+      } catch (err) {
+        const errorMsg = `🔥 Erreur critique pour la pointeuse ${pointeuse.pointeuse} (${pointeuse.adresse_ip}): ${err}`;
+        console.error(errorMsg);
+        allErrors.push(errorMsg);
       }
+    }
 
-      // 6️⃣ Conditions d'arrêt
-      // - responseStatusStrg: "OK" = dernière page, "MORE" = il y a d'autres pages
-      // - Ou si on a récupéré tous les utilisateurs
-      if (responseStatusStrg === "OK" || searchResultPosition >= totalMatches) {
-        console.log("🏁 Toutes les pages ont été récupérées");
-        break;
-      }
-
-      // Petite pause entre les requêtes pour éviter de surcharger l'API
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-    } while (true);
-
-    // 7️⃣ Résumé final
-    console.log(`\n🎯 RÉSUMÉ DE L'IMPORT:`);
-    console.log(`📊 Total utilisateurs dans l'API: ${totalMatches}`);
-    console.log(`📥 Utilisateurs récupérés: ${allUsers.length}`);
-    console.log(`✅ Utilisateurs créés: ${createdCount}`);
-    console.log(`⏩ Utilisateurs ignorés (déjà existants): ${allUsers.length - createdCount - errors.length}`);
-    console.log(`❌ Erreurs: ${errors.length}`);
+    // 9️⃣ Résumé final
+    console.log(`\n🎯 RÉSUMÉ DE L'IMPORT UTILISATEURS:`);
+    console.log(`📡 Pointeuses traitées: ${pointeusesProcessed}/${pointeuses.length}`);
+    console.log(`📊 Total utilisateurs dans toutes les APIs: ${totalUsers}`);
+    console.log(`✅ Utilisateurs créés: ${totalCreatedCount}`);
+    console.log(`⏩ Matricules uniques traités: ${processedMatricules.size}`);
+    console.log(`❌ Erreurs: ${allErrors.length}`);
 
     return { 
       success: true, 
-      count: createdCount,
-      totalUsers: totalMatches,
-      errors: errors.length > 0 ? errors : undefined
+      count: totalCreatedCount,
+      totalUsers: totalUsers,
+      pointeusesProcessed: pointeusesProcessed,
+      errors: allErrors.length > 0 ? allErrors : undefined
     };
 
   } catch (err) {

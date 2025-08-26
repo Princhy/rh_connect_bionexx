@@ -10,6 +10,11 @@ export enum TypeConge {
     AUTRE ="AUTRE"
 }
 
+export enum StatutConge {
+    ATTENTE = "ATTENTE",
+    VALIDE = "VALIDE",
+    REFUSE = "REFUSE"
+}
 
 @Entity()
 export class Conge {
@@ -43,6 +48,12 @@ export class Conge {
 
     @Column({ length: 20, nullable: true })
     personne_interim?: string;
+
+    @Column({
+        type: "enum",
+        enum: StatutConge,
+    })
+    statut: StatutConge;
 
     // Relations
     @ManyToOne(() => User)

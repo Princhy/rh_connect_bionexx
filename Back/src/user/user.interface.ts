@@ -45,4 +45,5 @@ export interface OUser {
     prenom?: string;
     email: string;
     role: Role;
+    id_departement: number;
 }

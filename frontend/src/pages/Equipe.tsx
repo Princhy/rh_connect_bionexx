@@ -100,6 +100,7 @@ const TeamManager: React.FC = () => {
   const [currentPlannings, setCurrentPlannings] = useState<any[]>([]);
   const [newTeam, setNewTeam] = useState('');
   const [loading, setLoading] = useState(false);
+  const [searchDate, setSearchDate] = useState(new Date().toISOString().split('T')[0]);
 
   // États pour la suppression des équipes
   const [itemDeleteTeam, setItemDeleteTeam] = useState<{ id_equipe: number } | null>(null);
@@ -149,15 +150,16 @@ const TeamManager: React.FC = () => {
     }
   };
 
-  const fetchCurrentPlannings = async () => {
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const response = await axiosInstance.get(`/plannings/date/${today}`);
-      setCurrentPlannings(response.data);
-    } catch (error) {
-      console.error('Erreur lors du chargement des plannings actuels:', error);
-    }
-  };
+  const fetchCurrentPlannings = async (targetDate?: string) => {
+  try {
+    const dateToFetch = targetDate || new Date().toISOString().split('T')[0];
+    const response = await axiosInstance.get(`/plannings/date/${dateToFetch}`);
+    setCurrentPlannings(response.data);
+  } catch (error) {
+    console.error('Erreur lors du chargement des plannings actuels:', error);
+  }
+};
+
 
   // Fonctions pour ajouter une équipe
   const handleAddTeam = async () => {
@@ -356,44 +358,78 @@ const TeamManager: React.FC = () => {
     <Container maxWidth="xl" sx={{ mt: 10, mb: 4 }}>
       {loading && <LinearProgress />}
       
-      {/* Section plannings actuels */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <CalendarTodayIcon sx={{ mr: 1 }} />
-          <Typography variant="h6">
-            Plannings d'aujourd'hui ({new Date().toLocaleDateString('fr-FR')})
+   {/* Section plannings actuels */}
+<Paper sx={{ p: 3, mb: 3 }}>
+  <Box 
+    sx={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'space-between', // <-- séparation gauche / droite
+      mb: 2 
+    }}
+  >
+    {/* Titre à gauche */}
+    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <CalendarTodayIcon sx={{ mr: 1 }} />
+      <Typography variant="h6">
+        Plannings d'aujourd'hui ({new Date().toLocaleDateString('fr-FR')})
+      </Typography>
+    </Box>
+
+    {/* Recherche à droite */}
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <TextField
+        type="date"
+        label="Rechercher par date"
+        value={searchDate}
+        onChange={(e) => setSearchDate(e.target.value)}
+        InputLabelProps={{ shrink: true }}
+        size="small"
+      />
+      <Button
+        variant="contained"
+        color="secondary"
+        onClick={() => fetchCurrentPlannings(searchDate)}
+      >
+        Rechercher
+      </Button>
+      <IconButton onClick={() => { 
+        setSearchDate(new Date().toISOString().split('T')[0]); 
+        fetchCurrentPlannings(); 
+      }}>
+        <RefreshIcon />
+      </IconButton>
+    </Box>
+  </Box>
+
+  {/* Liste des plannings */}
+  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+    {currentPlannings.map((planning) => (
+      <Card key={planning.id_equipe} sx={{ minWidth: 200 }}>
+        <CardContent sx={{ pb: 2 }}>
+          <Typography variant="h6" color="secondary">
+            {planning.equipe?.equipe}
           </Typography>
-          <IconButton onClick={fetchCurrentPlannings} sx={{ ml: 1 }}>
-            <RefreshIcon />
-          </IconButton>
-        </Box>
-        
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          {currentPlannings.map((planning) => (
-            <Card key={planning.id_equipe} sx={{ minWidth: 200 }}>
-              <CardContent sx={{ pb: 2 }}>
-                <Typography variant="h6" color="primary">
-                  {planning.equipe?.equipe}
-                </Typography>
-                {planning.planning.travaille ? (
-                  <Box>
-                    <Chip 
-                      label={planning.planning.shift === 'jour' ? 'Jour' : 'Nuit'} 
-                      color={planning.planning.shift === 'jour' ? 'success' : 'warning'}
-                      size="small"
-                    />
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      {planning.planning.deb_heure} - {planning.planning.fin_heure}
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Chip label="Repos" color="default" size="small" />
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </Box>
-      </Paper>
+          {planning.planning.travaille ? (
+            <Box>
+              <Chip 
+                label={planning.planning.shift === 'jour' ? 'Jour' : 'Nuit'} 
+                color={planning.planning.shift === 'jour' ? 'success' : 'warning'}
+                size="small"
+              />
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {planning.planning.deb_heure} - {planning.planning.fin_heure}
+              </Typography>
+            </Box>
+          ) : (
+            <Chip label="Repos" color="default" size="small" />
+          )}
+        </CardContent>
+      </Card>
+    ))}
+  </Box>
+</Paper>
+
 
       {/* Section Équipes */}
       <Paper sx={{ p: 3, mb: 3 }}>

@@ -13,7 +13,7 @@ const myDataSource = new DataSource({
     entities: ["src/**/*.entity.ts"],
     migrations: ["src/migrations/**/*.ts"],
     migrationsTableName: "migrations",
-    logging: true,
+    logging: process.env.ENABLE_WEBHOOK_DEBUG === 'true',
     synchronize: false,
 });
 

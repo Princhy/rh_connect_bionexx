@@ -15,7 +15,8 @@ const ReferenceManager = lazy(() => import('./pages/ref'));
 const TeamManager = lazy(() => import('./pages/Equipe'));
 const Pointage = lazy(()=> import('./pages/Pointage'));
 const Analyse = lazy(()=>import('./pages/Analyse'));
-const Conges= lazy(()=>import('./pages/Conge'))
+const Conges= lazy(()=>import('./pages/Conge'));
+const UnauthorizedPage = lazy(() => import('./pages/Unauthorized'));
 const theme = createTheme({
   palette: {
     primary: {
@@ -45,20 +46,56 @@ function App() {
             {/* Pages publiques (sans sidebar) */}
             <Route path="/" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-            {/* Pages admin (avec sidebar) */}
+            {/* Pages protégées (avec sidebar) */}
             <Route element={
                 <ProtectedRoute>
                     <AdminLayout />
                 </ProtectedRoute> 
                 }>
+              {/* Dashboard - accessible à tous les rôles */}
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/employe" element={<EmployePage />} />
-              <Route path="employe/register" element={<RegisterPage />} />
-              <Route path="/ref" element={<ReferenceManager />} />
-              <Route path="/equipes" element={<TeamManager />} />
-              <Route path='/pointages' element={<Pointage/>} />
-              <Route path='/analyses' element={<Analyse/>} />
+              
+              {/* Pages Admin et RH uniquement */}
+              <Route path="/equipes" element={
+                <ProtectedRoute allowedRoles={['Admin', 'RH', 'Superviseur']}>
+                  <TeamManager />
+                </ProtectedRoute>
+              } />
+              <Route path="employe/register" element={
+                <ProtectedRoute allowedRoles={['Admin', 'RH']}>
+                  <RegisterPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/ref" element={
+                <ProtectedRoute allowedRoles={['Admin', 'RH']}>
+                  <ReferenceManager />
+                </ProtectedRoute>
+              } />
+              
+              {/* Pages Admin, RH et Superviseur */}
+            
+               <Route path="/employe" element={
+                <ProtectedRoute allowedRoles={['Admin', 'RH', 'Superviseur']}>
+                  <EmployePage />
+                </ProtectedRoute>
+              } />
+              {/* Pages Admin, RH, Superviseur et Employé */}
+              <Route path='/analyses' element={
+                <ProtectedRoute allowedRoles={['Admin', 'RH', 'Superviseur', 'Employe']}>
+                  <Analyse/>
+                </ProtectedRoute>
+              } />
+              
+              {/* Pages Admin et RH uniquement */}
+              <Route path='/pointages' element={
+                <ProtectedRoute allowedRoles={['Admin', 'RH']}>
+                  <Pointage/>
+                </ProtectedRoute>
+              } />
+              
+              {/* Pages accessibles à tous les rôles connectés */}
               <Route path='/conges' element={<Conges/>} />
             </Route>
           </Routes>

@@ -19,10 +19,12 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tooltip,
 } from '@mui/material';
 
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import { useTheme, alpha } from '@mui/material/styles';
 import axiosInstance from '../config/axiosConfig';
 import { toast } from 'react-toastify';
 
@@ -37,6 +39,8 @@ interface Department {
 }
 
 const ReferenceManager: React.FC = () => {
+  const theme = useTheme();
+  const green = theme.palette.success.main;
   const [lieux, setLieux] = useState<Location[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [newLieux, setNewLieux] = useState('');
@@ -225,21 +229,42 @@ const ReferenceManager: React.FC = () => {
                   <TableRow key={lieu.id_lieu}>
                     <TableCell>{lieu.lieu}</TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        onClick={() => openEditLieuxModal(lieu)}
-                        color="secondary"
-                        size="small"
-                        sx={{ mr: 1 }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => openDeleteLieuxModal(lieu)}
-                        color="error"
-                        size="small"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                        <Tooltip title="Modifier">
+                          <IconButton
+                            size="small"
+                            onClick={() => openEditLieuxModal(lieu)}
+                            sx={{
+                              color: green,
+                              bgcolor: alpha(green, 0.14),
+                              '&:hover': { 
+                                bgcolor: alpha(green, 0.22),
+                                transform: 'scale(1.05)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Supprimer">
+                          <IconButton
+                            size="small"
+                            onClick={() => openDeleteLieuxModal(lieu)}
+                            sx={{
+                              color: theme.palette.error.main,
+                              bgcolor: alpha(theme.palette.error.main, 0.12),
+                              '&:hover': { 
+                                bgcolor: alpha(theme.palette.error.main, 0.2),
+                                transform: 'scale(1.05)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -278,21 +303,42 @@ const ReferenceManager: React.FC = () => {
                   <TableRow key={department.id_departement}>
                     <TableCell>{department.departement}</TableCell>
                     <TableCell align="right">
-                      <IconButton
-                        onClick={() => openEditDepartmentModal(department)}
-                        color="secondary"
-                        size="small"
-                        sx={{ mr: 1 }}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => openDeleteDepartmentModal(department)}
-                        color="error"
-                        size="small"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                        <Tooltip title="Modifier">
+                          <IconButton
+                            size="small"
+                            onClick={() => openEditDepartmentModal(department)}
+                            sx={{
+                              color: green,
+                              bgcolor: alpha(green, 0.14),
+                              '&:hover': { 
+                                bgcolor: alpha(green, 0.22),
+                                transform: 'scale(1.05)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Supprimer">
+                          <IconButton
+                            size="small"
+                            onClick={() => openDeleteDepartmentModal(department)}
+                            sx={{
+                              color: theme.palette.error.main,
+                              bgcolor: alpha(theme.palette.error.main, 0.12),
+                              '&:hover': { 
+                                bgcolor: alpha(theme.palette.error.main, 0.2),
+                                transform: 'scale(1.05)'
+                              },
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}

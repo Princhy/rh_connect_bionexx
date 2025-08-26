@@ -26,7 +26,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Paper
+  Paper,
+  useTheme,
+  alpha,
+  darken
 } from '@mui/material';
 import {
   CheckCircle as CheckIcon,
@@ -45,7 +48,8 @@ import {
   Fingerprint as FingerprintIcon,
   Edit as EditIcon,
   LocationOn as LocationIcon,
-  FileDownload as FileDownloadIcon
+  FileDownload as FileDownloadIcon,
+  Hotel as HotelIcon 
 } from '@mui/icons-material';
 import axiosInstance from '../config/axiosConfig';
 import { toast } from 'react-toastify';
@@ -59,7 +63,8 @@ const StatutAnalyse = {
   ABSENT: "absent",
   SORTIE_ANTICIPEE: "sortie_anticipee",
   PRESENT_AVEC_RETARD: "present_avec_retard",
-  EN_CONGE: "en_conge"
+  EN_CONGE: "en_conge",
+  EN_REPOS: "EN_REPOS"
 } as const;
 
 type StatutAnalyse = typeof StatutAnalyse[keyof typeof StatutAnalyse];
@@ -110,6 +115,7 @@ interface DashboardStats {
   sorties_anticipees: number;
   presents_avec_retard: number;
   en_conge:number;
+  en_repos: number;
   taux_presence: number;
   retard_moyen_minutes: number;
 }
@@ -127,6 +133,7 @@ const modalStyle = {
 };
 
 const Analyse = () => {
+  
   // États principaux
   const [analyses, setAnalyses] = useState<AnalyseOutput[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -143,7 +150,9 @@ const Analyse = () => {
   const [selectedAnalyse, setSelectedAnalyse] = useState<AnalyseOutput | null>(null);
   const [justificationForm, setJustificationForm] = useState({
     justifie: false,
-    commentaire: ''
+    commentaire: '',
+    statut_final: StatutAnalyse.PRESENT as StatutAnalyse,
+    mode_pointage: ''
   });
 
   // Charger les analyses pour la date sélectionnée
@@ -152,7 +161,7 @@ const Analyse = () => {
     try {
       const response = await axiosInstance.get(`/analyses/date/"${date}"`);
       setAnalyses(response.data);
-      console.log(response)
+      //console.log(response)
       
       // Calculer les statistiques si des analyses existent
       if (response.data.length > 0) {
@@ -179,6 +188,7 @@ const Analyse = () => {
     const sortiesAnticipees = analysesData.filter(a => a.statut_final === StatutAnalyse.SORTIE_ANTICIPEE).length;
     const presentsAvecRetard = analysesData.filter(a => a.statut_final === StatutAnalyse.PRESENT_AVEC_RETARD).length;
     const en_conge = analysesData.filter(a => a.statut_final === StatutAnalyse.EN_CONGE).length;
+    const EN_REPOS =analysesData.filter(a=> a.statut_final === StatutAnalyse.EN_REPOS).length;
     const totalRetardMinutes = analysesData.reduce((sum, a) => sum + a.retard_minutes, 0);
     const employesAvecRetard = retards + presentsAvecRetard;
     const retardMoyen = employesAvecRetard > 0 ? Math.round(totalRetardMinutes / employesAvecRetard) : 0;
@@ -190,8 +200,9 @@ const Analyse = () => {
       retards,
       sorties_anticipees: sortiesAnticipees,
       en_conge,
+      en_repos:EN_REPOS,
       presents_avec_retard: presentsAvecRetard,
-      taux_presence: total > 0 ? Math.round(((presents + retards + sortiesAnticipees + presentsAvecRetard) / total) * 100) : 0,
+      taux_presence: total > 0 ? Math.round(((presents + retards + sortiesAnticipees + presentsAvecRetard ) / (total -EN_REPOS- en_conge)) * 100) : 0,
       retard_moyen_minutes: retardMoyen
     });
   };
@@ -199,13 +210,16 @@ const Analyse = () => {
   // Analyser une journée
   const analyserJournee = async (date: string) => {
     setIsAnalyzing(true);
+    const loadingToast = toast.loading("Analyse en cours...");
     try {
       const response = await axiosInstance.post('/analyses/analyser-journee', { date });
       
       if (response.data.success) {
+        toast.dismiss(loadingToast)
         toast.success(response.data.message);
         await loadAnalyses(date);
       } else {
+        toast.dismiss(loadingToast)
         toast.error(response.data.message);
       }
     } catch (error) {
@@ -213,6 +227,7 @@ const Analyse = () => {
       toast.error('Erreur lors de l\'analyse de la journée');
     } finally {
       setIsAnalyzing(false);
+      toast.dismiss(loadingToast)
     }
   };
 
@@ -221,7 +236,9 @@ const Analyse = () => {
     setSelectedAnalyse(analyse);
     setJustificationForm({
       justifie: analyse.justifie,
-      commentaire: analyse.commentaire || ''
+      commentaire: analyse.commentaire || '',
+       statut_final: analyse.statut_final,
+      mode_pointage: analyse.mode_pointage || 'bio'
     });
     setOpenJustification(true);
   };
@@ -230,7 +247,14 @@ const Analyse = () => {
     if (!selectedAnalyse) return;
     
     try {
-      const response = await axiosInstance.put(`/analyses/justifier/${selectedAnalyse.id_analyse}`, justificationForm);
+      const payload = {
+      statut_final: justificationForm.statut_final,
+      commentaire: justificationForm.commentaire,
+      mode_pointage: 'manuel',
+      justifie: true
+    };
+
+      const response = await axiosInstance.put(`/analyses/${selectedAnalyse.id_analyse}`, payload);
       
       if (response.data.success) {
         toast.success(response.data.message);
@@ -267,6 +291,7 @@ const Analyse = () => {
       case StatutAnalyse.SORTIE_ANTICIPEE: return <ExitIcon />;
       case StatutAnalyse.PRESENT_AVEC_RETARD: return <ScheduleIcon />;
       case StatutAnalyse.EN_CONGE: return <EventBusyIcon />;
+      case StatutAnalyse.EN_REPOS: return <HotelIcon/>
       default: return <PersonIcon />;
     }
   };
@@ -303,7 +328,8 @@ const Analyse = () => {
       [StatutAnalyse.RETARD]: 'Retard',
       [StatutAnalyse.SORTIE_ANTICIPEE]: 'Sortie Anticipée',
       [StatutAnalyse.PRESENT_AVEC_RETARD]: 'Présent avec Retard',
-      [StatutAnalyse.EN_CONGE]:'Congé'
+      [StatutAnalyse.EN_CONGE]:'Congé',
+      [StatutAnalyse.EN_REPOS]:'En repos'
     };
 
     return (
@@ -711,7 +737,7 @@ const Analyse = () => {
             />
             <Button
               variant="contained"
-              color="primary"
+              color="secondary"
               onClick={() => analyserJournee(selectedDate)}
               disabled={isAnalyzing}
               startIcon={isAnalyzing ? <AccessTimeIcon className="animate-spin" /> : <PlayIcon />}
@@ -738,60 +764,194 @@ const Analyse = () => {
               📈 Statistiques du {new Date(selectedDate).toLocaleDateString('fr-FR')}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              {/* Carte Présents */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
-                <Card sx={{ bgcolor: 'success.light', color: 'white' }}>
-                  <CardContent sx={{ textAlign: 'center', py: 1 }}>
-                    <EventAvailableIcon sx={{ fontSize: 24, mb: 0.5 }} />
-                    <Typography variant="h4">{stats.presents}</Typography>
-                    <Typography variant="body2">Présents</Typography>
+                <Card sx={{ 
+                  backgroundColor: 'transparent',
+                  backgroundImage: `
+                    repeating-linear-gradient(45deg, ${alpha('#4CAF50', 0.1)} 0 2px, transparent 2px 4px),
+                    linear-gradient(135deg, ${alpha('#4CAF50', 0.8)} 0%, ${alpha('#2E7D32', 0.9)} 100%)
+                  `,
+                  backgroundBlendMode: 'overlay, normal',
+                  color: 'white',
+                  boxShadow: '0 8px 32px rgba(76, 175, 80, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 40px rgba(76, 175, 80, 0.4)'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <EventAvailableIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                      {stats.presents}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Présents</Typography>
                   </CardContent>
                 </Card>
               </Box>
+
+              {/* Carte Absents */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
-                <Card sx={{ bgcolor: 'error.light', color: 'white' }}>
-                  <CardContent sx={{ textAlign: 'center', py: 1 }}>
-                    <EventBusyIcon sx={{ fontSize: 24, mb: 0.5 }} />
-                    <Typography variant="h4">{stats.absents}</Typography>
-                    <Typography variant="body2">Absents</Typography>
+                <Card sx={{ 
+                  backgroundColor: 'transparent',
+                  backgroundImage: `
+                    repeating-linear-gradient(45deg, ${alpha('#F44336', 0.1)} 0 2px, transparent 2px 4px),
+                    linear-gradient(135deg, ${alpha('#F44336', 0.8)} 0%, ${alpha('#C62828', 0.9)} 100%)
+                  `,
+                  backgroundBlendMode: 'overlay, normal',
+                  color: 'white',
+                  boxShadow: '0 8px 32px rgba(244, 67, 54, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 40px rgba(244, 67, 54, 0.4)'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <EventBusyIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                      {stats.absents}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Absents</Typography>
                   </CardContent>
                 </Card>
               </Box>
+
+              {/* Carte Retards */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
-                <Card sx={{ bgcolor: 'warning.light', color: 'white' }}>
-                  <CardContent sx={{ textAlign: 'center', py: 1 }}>
-                    <ScheduleIcon sx={{ fontSize: 24, mb: 0.5 }} />
-                    <Typography variant="h4">{stats.retards + stats.presents_avec_retard}</Typography>
-                    <Typography variant="body2">Retards</Typography>
+                <Card sx={{ 
+                  backgroundColor: 'transparent',
+                  backgroundImage: `
+                    repeating-linear-gradient(45deg, ${alpha('#FF9800', 0.1)} 0 2px, transparent 2px 4px),
+                    linear-gradient(135deg, ${alpha('#FF9800', 0.8)} 0%, ${alpha('#E65100', 0.9)} 100%)
+                  `,
+                  backgroundBlendMode: 'overlay, normal',
+                  color: 'white',
+                  boxShadow: '0 8px 32px rgba(255, 152, 0, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 40px rgba(255, 152, 0, 0.4)'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <ScheduleIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                      {stats.retards + stats.presents_avec_retard}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Retards</Typography>
                   </CardContent>
                 </Card>
               </Box>
+
+              {/* Carte Sorties Anticipées */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
-                <Card sx={{ bgcolor: 'info.light', color: 'white' }}>
-                  <CardContent sx={{ textAlign: 'center', py: 1 }}>
-                    <ExitIcon sx={{ fontSize: 24, mb: 0.5 }} />
-                    <Typography variant="h4">{stats.sorties_anticipees}</Typography>
-                    <Typography variant="body2">Sorties Anticipées</Typography>
+                <Card sx={{ 
+                  backgroundColor: 'transparent',
+                  backgroundImage: `
+                    repeating-linear-gradient(45deg, ${alpha('#2196F3', 0.1)} 0 2px, transparent 2px 4px),
+                    linear-gradient(135deg, ${alpha('#2196F3', 0.8)} 0%, ${alpha('#1565C0', 0.9)} 100%)
+                  `,
+                  backgroundBlendMode: 'overlay, normal',
+                  color: 'white',
+                  boxShadow: '0 8px 32px rgba(33, 150, 243, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 40px rgba(33, 150, 243, 0.4)'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <ExitIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                      {stats.sorties_anticipees}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Sorties Anticipées</Typography>
                   </CardContent>
                 </Card>
               </Box>
+
+              {/* Carte Taux Présence */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
-                <Card sx={{ bgcolor: 'primary.light', color: 'white' }}>
-                  <CardContent sx={{ textAlign: 'center', py: 1 }}>
-                    <PersonIcon sx={{ fontSize: 24, mb: 0.5 }} />
-                    <Typography variant="h4">{stats.taux_presence}%</Typography>
-                    <Typography variant="body2">Taux Présence</Typography>
+                <Card sx={{ 
+                  backgroundColor: 'transparent',
+                  backgroundImage: `
+                    repeating-linear-gradient(45deg, ${alpha('#9C27B0', 0.1)} 0 2px, transparent 2px 4px),
+                    linear-gradient(135deg, ${alpha('#9C27B0', 0.8)} 0%, ${alpha('#6A1B9A', 0.9)} 100%)
+                  `,
+                  backgroundBlendMode: 'overlay, normal',
+                  color: 'white',
+                  boxShadow: '0 8px 32px rgba(156, 39, 176, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 40px rgba(156, 39, 176, 0.4)'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <PersonIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                      {stats.taux_presence}%
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Taux Présence</Typography>
                   </CardContent>
                 </Card>
               </Box>
+
+              {/* Carte En Repos */}
+              <Box sx={{ flex: '1 1 calc(16.66% - 8px)', minWidth: '140px' }}>
+                <Card sx={{ 
+                  backgroundColor: 'transparent',
+                  backgroundImage: `
+                    repeating-linear-gradient(45deg, ${alpha('#795548', 0.1)} 0 2px, transparent 2px 4px),
+                    linear-gradient(135deg, ${alpha('#795548', 0.8)} 0%, ${alpha('#4E342E', 0.9)} 100%)
+                  `,
+                  backgroundBlendMode: 'overlay, normal',
+                  color: 'white',
+                  boxShadow: '0 8px 32px rgba(121, 85, 72, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 40px rgba(121, 85, 72, 0.4)'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <HotelIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                      {stats.en_repos}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>En Repos</Typography>
+                  </CardContent>
+                </Card>
+              </Box>
+
+              {/* Carte Congés */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
-  <Card sx={{ bgcolor: '#9E9E9E', color: 'white' }}>
-    <CardContent sx={{ textAlign: 'center', py: 1 }}>
-      <EventBusyIcon sx={{ fontSize: 24, mb: 0.5 }} />
-      <Typography variant="h4">{stats.en_conge}</Typography>
-      <Typography variant="body2">Congés</Typography>
-    </CardContent>
-  </Card>
-</Box>
+                <Card sx={{ 
+                  backgroundColor: 'transparent',
+                  backgroundImage: `
+                    repeating-linear-gradient(45deg, ${alpha('#9E9E9E', 0.1)} 0 2px, transparent 2px 4px),
+                    linear-gradient(135deg, ${alpha('#9E9E9E', 0.8)} 0%, ${alpha('#616161', 0.9)} 100%)
+                  `,
+                  backgroundBlendMode: 'overlay, normal',
+                  color: 'white',
+                  boxShadow: '0 8px 32px rgba(158, 158, 158, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: '0 12px 40px rgba(158, 158, 158, 0.4)'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                    <EventBusyIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                      {stats.en_conge}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Congés</Typography>
+                  </CardContent>
+                </Card>
+              </Box>
             </Box>
           </Paper>
         </Box>
@@ -834,30 +994,24 @@ const Analyse = () => {
               </Typography>
               {selectedAnalyse && formatStatut(selectedAnalyse.statut_final)}
               
-              <FormControl fullWidth sx={{ mt: 2 }}>
-                <InputLabel>Statut de justification</InputLabel>
-                <Select
-                  value={justificationForm.justifie ? 'true' : 'false'}
-                  onChange={(e) => setJustificationForm({
-                    ...justificationForm,
-                    justifie: e.target.value === 'true'
-                  })}
-                  label="Statut de justification"
-                >
-                  <MenuItem value="false">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <CancelIcon color="error" />
-                      Non justifié
-                    </Box>
-                  </MenuItem>
-                  <MenuItem value="true">
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <CheckIcon color="success" />
-                      Justifié
-                    </Box>
-                  </MenuItem>
-                </Select>
-              </FormControl>
+              {/* Dans le modal de justification */}
+<FormControl fullWidth sx={{ mt: 2 }}>
+  <InputLabel>Statut final</InputLabel>
+  <Select
+    value={justificationForm.statut_final}
+    onChange={(e) => setJustificationForm({
+      ...justificationForm,
+      statut_final: e.target.value as StatutAnalyse
+    })}
+    label="Statut final"
+  >
+    {Object.values(StatutAnalyse).map((statut) => (
+      <MenuItem key={statut} value={statut}>
+        {statut.replace('_', ' ').toUpperCase()}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
 
               <TextField
                 fullWidth
@@ -881,7 +1035,7 @@ const Analyse = () => {
               <Button 
                 onClick={handleSaveJustification}
                 variant="contained"
-                color="primary"
+                color="secondary"
                 startIcon={<CheckIcon />}
               >
                 Enregistrer

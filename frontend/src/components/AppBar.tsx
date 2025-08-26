@@ -14,10 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 import AdbIcon from '@mui/icons-material/Adb';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../config/authConfig';
-
-const pages = ['Products', 'Pricing', 'Blog'];
-
-
+import { useTheme, alpha, darken } from '@mui/material/styles';
 
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(null);
@@ -39,7 +36,13 @@ function ResponsiveAppBar() {
   };
 
   const navigate = useNavigate();
-  const {logout} = useAuth();
+  const { logout, user } = useAuth();
+  const theme = useTheme();
+
+  const success = theme.palette.success.main;
+  const base = darken(success, 0.3);
+  const mid = darken(success, 0.4);
+  const deep = darken(success, 0.55);
 
 
   const handleLogout = () => {
@@ -47,7 +50,22 @@ function ResponsiveAppBar() {
   navigate('/');
 };
   return (
-    <AppBar position="fixed">
+    <AppBar 
+      position="fixed"
+      sx={{
+        color: 'common.white',
+        backgroundColor: 'transparent',
+        backgroundImage: `
+          repeating-radial-gradient(circle at 20% 50%, ${alpha('#000', 0.12)} 0 1px, transparent 1px 4px),
+          repeating-radial-gradient(circle at 80% 50%, ${alpha('#000', 0.1)} 0 1px, transparent 1px 4px),
+          linear-gradient(135deg, ${alpha('#ffffff', 0.08)} 0%, ${alpha('#ffffff', 0)} 40%),
+          linear-gradient(90deg, ${base} 0%, ${mid} 50%, ${deep} 100%)
+        `,
+        backgroundBlendMode: 'overlay, overlay, screen, normal',
+        boxShadow: '0 6px 24px rgba(0,0,0,0.22)',
+        backdropFilter: 'blur(2px)'
+      }}
+    >
       <Container 
         sx={{mx: 0,width:'100%', maxWidth: '100%!important'}}>
         <Toolbar disableGutters sx={{ paddingLeft:10 }}>
@@ -63,7 +81,7 @@ function ResponsiveAppBar() {
               fontFamily: 'monospace',
               fontWeight: 700,
               letterSpacing: '.3rem',
-              color: 'secondary.main',
+              color: 'common.white',
               textDecoration: 'none',
               fontSize: '1.5rem',
             }}
@@ -98,11 +116,9 @@ function ResponsiveAppBar() {
               onClose={handleCloseNavMenu}
               sx={{ display: { xs: 'block', md: 'none' } }}
             >
-              {pages.map((page) => (
-                <MenuItem key={page} onClick={handleCloseNavMenu}>
-                  <Typography sx={{ textAlign: 'center' }}>{page}</Typography>
-                </MenuItem>
-              ))}
+              <MenuItem onClick={handleCloseNavMenu}>
+                <Typography sx={{ textAlign: 'center' }}>Dashboard</Typography>
+              </MenuItem>
             </Menu>
           </Box>
           <AdbIcon sx={{ display: { xs: 'flex', md: 'none' }, mr: 1 }} />
@@ -125,20 +141,36 @@ function ResponsiveAppBar() {
             LOGO
           </Typography>
           <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' } }}>
-            {pages.map((page) => (
-              <Button
-                key={page}
-                onClick={handleCloseNavMenu}
-                sx={{ my: 2, color: 'white', display: 'block' }}
-              >
-                {page}
-              </Button>
-            ))}
+            <Button
+              onClick={handleCloseNavMenu}
+              sx={{ my: 2, color: 'white', display: 'block' }}
+            >
+              Dashboard
+            </Button>
           </Box>
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
+          <Box sx={{ flexGrow: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
+            {user && (
+              <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                <Typography variant="body2" sx={{ color: 'white', textAlign: 'right' }}>
+                  {user.prenom} {user.nom}
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', textAlign: 'right', display: 'block' }}>
+                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                </Typography>
+              </Box>
+            )}
+            <Tooltip title="Paramètres utilisateur">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                <Avatar 
+                  alt={user ? `${user.prenom} ${user.nom}` : "Utilisateur"} 
+                  sx={{ 
+                    bgcolor: 'success.main',
+                    fontSize: '0.9rem',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {user ? `${user.prenom.charAt(0)}${user.nom.charAt(0)}` : "U"}
+                </Avatar>
               </IconButton>
             </Tooltip>
             <Menu

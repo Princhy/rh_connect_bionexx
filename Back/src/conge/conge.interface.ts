@@ -1,4 +1,4 @@
-import { TypeConge } from "./conge.entity";
+import { TypeConge, StatutConge } from "./conge.entity";
 
 export interface IConge {
     id_conge: number;
@@ -10,6 +10,7 @@ export interface IConge {
     date_depart: Date | string;
     date_reprise: Date | string;
     personne_interim?: string;
+    statut?: StatutConge;
 }
 
 export interface CongeOutput {
@@ -22,6 +23,7 @@ export interface CongeOutput {
     date_depart: Date | string;
     date_reprise: Date | string;
     personne_interim?: string;
+    statut?: StatutConge;
     user?: {
         nom: string;
         prenom: string;
@@ -43,6 +45,7 @@ export interface CongeCreateParams {
     date_depart: Date | string;
     date_reprise: Date | string;
     personne_interim?: string;
+    statut?: StatutConge;
 }
 
 export interface CongeUpdateParams extends Partial<CongeCreateParams> {}

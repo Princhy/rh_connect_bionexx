@@ -9,7 +9,7 @@
     },
     "routes": {
       "routesDir": "./routes",
-      "authenticationModule":"./src/authentification/authentification.middleware.ts"
+      "authenticationModule":"./src/Authentification/authentification.middleware.ts"
     }
   }
 

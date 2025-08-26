@@ -8,7 +8,8 @@ export enum StatutAnalyse {
   ABSENT = "absent",
   SORTIE_ANTICIPEE = "sortie_anticipee",
   PRESENT_AVEC_RETARD = "present_avec_retard",
-  EN_CONGE = "en_conge" // Nouveau statut pour les employés en congé
+  EN_CONGE = "en_conge",
+  EN_REPOS = 'EN_REPOS' 
 }
 
 @Entity()
@@ -56,7 +57,6 @@ export class Analyse {
   @Column({ type: 'text', nullable: true })
   commentaire: string;
 
-  // Nouveaux attributs pour le pointage
   @Column({
     type: 'enum',
     enum: ModePointage,
@@ -93,6 +93,9 @@ export interface IAnalyse {
   mode_pointage?: ModePointage;
   lieu_pointage?: string;
   date_analyse: Date;
+   cycle_travail_debut?: Date;
+  cycle_travail_fin?: Date;
+    est_equipe_nuit?: boolean;
 }
 
 export interface AnalyseOutput extends IAnalyse {

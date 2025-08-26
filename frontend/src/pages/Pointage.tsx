@@ -18,11 +18,14 @@ import {
   Autocomplete,
   DialogActions,
   Alert,
-  Chip
+  Chip,
+  Tooltip,
+  IconButton
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import { useTheme, alpha } from '@mui/material/styles';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -84,6 +87,8 @@ const deleteStyle = {
 };
 
 const Pointage = () => {
+  const theme = useTheme();
+  const green = theme.palette.success.main;
   const [data, setData] = useState<Pointage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -379,19 +384,41 @@ const handleImportPointagesByDate = async () => {
         header: 'Actions',
         size: 100,
         Cell: ({ row }) => (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <button 
-              className='mx-1' 
-              onClick={() => handleOpenEdit(row.original)}
-            >
-              <EditIcon sx={{ color: 'green' }} />
-            </button>
-            <button 
-              className='mx-1' 
-              onClick={() => handleOpenDelete(row.original)}
-            >
-              <DeleteIcon sx={{ color: 'red' }} />
-            </button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title="Modifier">
+              <IconButton
+                size="small"
+                onClick={() => handleOpenEdit(row.original)}
+                sx={{
+                  color: green,
+                  bgcolor: alpha(green, 0.14),
+                  '&:hover': { 
+                    bgcolor: alpha(green, 0.22),
+                    transform: 'scale(1.05)'
+                  },
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Supprimer">
+              <IconButton
+                size="small"
+                onClick={() => handleOpenDelete(row.original)}
+                sx={{
+                  color: theme.palette.error.main,
+                  bgcolor: alpha(theme.palette.error.main, 0.12),
+                  '&:hover': { 
+                    bgcolor: alpha(theme.palette.error.main, 0.2),
+                    transform: 'scale(1.05)'
+                  },
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         )
       },
@@ -567,7 +594,7 @@ const handleImportPointagesByDate = async () => {
       
       <Button
         variant="contained"
-        color="primary"
+        color="success"
         onClick={handleImportPointagesByDate}
         disabled={importLoading}
         startIcon={importLoading ? <RefreshIcon className="animate-spin" /> : <RefreshIcon />}

@@ -40,7 +40,7 @@ export class CongeController extends Controller {
 
     // Créer un nouveau congé
     @Post()
-    //@Security("jwt", ["admin", "RH", "superviseur"])
+    //@Security("jwt", ["admin", "RH")
     public async createConge(@Body() requestBody: CongeCreateParams): Promise<CongeValidationResult> {
         try {
             const congeService = new CongeService();
@@ -71,7 +71,7 @@ export class CongeController extends Controller {
             }
 
             // Valider le solde (sauf pour les congés sans solde)
-            if (requestBody.type !== TypeConge.AUTRE) {
+           {/*  if (requestBody.type !== TypeConge.AUTRE) {
                 const soldeValidation = await congeService.validateSoldeConge(
                     requestBody.matricule,
                     requestBody.nbr_jours_permis
@@ -84,7 +84,7 @@ export class CongeController extends Controller {
                     };
                 }
             }
-
+            */}
             const conge = await congeService.createConge(requestBody);
             this.setStatus(201);
             
