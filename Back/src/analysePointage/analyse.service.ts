@@ -15,7 +15,7 @@ export type AnalyseCreationParams = Pick<
   "matricule" | "date" | "heure_prevue_arrivee" | "heure_prevue_depart" | 
   "heure_reelle_arrivee" | "heure_reelle_depart" | "retard_minutes" | 
   "sortie_anticipee_minutes" | "statut_final" | "travaille_aujourd_hui" | 
-  "commentaire" | "mode_pointage" | "lieu_pointage" | "cycle_travail_debut" | "cycle_travail_fin" | "est_equipe_nuit"
+  "commentaire" | "mode_pointage" | "lieu_pointage" | "lieu_travail" | "cycle_travail_debut" | "cycle_travail_fin" | "est_equipe_nuit"
 >;
 
 export type AnalyseUpdateParams = Partial<Pick<IAnalyse, "justifie" | "commentaire"|"statut_final" |"mode_pointage">>;
@@ -82,6 +82,19 @@ export class AnalyseService {
 
   public async getAnalysesByStatut(statut: StatutAnalyse, date?: string): Promise<AnalyseOutput[]> {
     const where: any = { statut_final: statut };
+    if (date) {
+      where.date = new Date(date);
+    }
+
+    return await analyseRepository().find({
+      where,
+      relations: ['user', 'user.equipe', 'user.departement', 'user.lieu'],
+      order: { date: 'DESC', matricule: 'ASC' }
+    });
+  }
+
+  public async getAnalysesByLieuTravail(lieuTravail: string, date?: string): Promise<AnalyseOutput[]> {
+    const where: any = { lieu_travail: lieuTravail };
     if (date) {
       where.date = new Date(date);
     }
@@ -204,7 +217,7 @@ export class AnalyseService {
     for (const planningEquipe of equipesQuiDoiventTravailler) {
       const employesEquipe = await userRepository().find({
         where: { id_equipe: planningEquipe.id_equipe },
-        relations: ['equipe']
+        relations: ['equipe', 'lieu']
       });
       
       console.log(`👥 Équipe qui travaille ${planningEquipe.id_equipe} (${planningEquipe.equipe?.equipe}): ${employesEquipe.length} employés`);
@@ -219,6 +232,7 @@ export class AnalyseService {
           prenom: employe.prenom,
           equipe: nomEquipe,
           id_equipe: employe.id_equipe,
+          lieu_travail: employe.lieu?.lieu || 'Lieu inconnu',
           planning: planningEquipe.planning,
           estEnRepos: forcerReposFerie,
           estReposFerie: forcerReposFerie
@@ -230,7 +244,7 @@ export class AnalyseService {
     for (const planningEquipe of equipesEnRepos) {
       const employesEquipe = await userRepository().find({
         where: { id_equipe: planningEquipe.id_equipe },
-        relations: ['equipe']
+        relations: ['equipe', 'lieu']
       });
       
       console.log(`🛌 Équipe en repos ${planningEquipe.id_equipe} (${planningEquipe.equipe?.equipe}): ${employesEquipe.length} employés`);
@@ -242,6 +256,7 @@ export class AnalyseService {
           prenom: employe.prenom,
           equipe: employe.equipe?.equipe || 'Inconnue',
           id_equipe: employe.id_equipe,
+          lieu_travail: employe.lieu?.lieu || 'Lieu inconnu',
           planning: planningEquipe.planning,
           estEnRepos: true,
           estReposFerie: false
@@ -256,7 +271,7 @@ export class AnalyseService {
       if (!dejaPresent) {
         const employeInfo = await userRepository().findOne({
           where: { matricule: employeConge.matricule },
-          relations: ['equipe']
+          relations: ['equipe', 'lieu']
         });
         
         if (employeInfo) {
@@ -266,6 +281,7 @@ export class AnalyseService {
             prenom: employeInfo.prenom,
             equipe: employeInfo.equipe?.equipe || 'Inconnue',
             id_equipe: employeInfo.id_equipe,
+            lieu_travail: employeInfo.lieu?.lieu || 'Lieu inconnu',
             planning: { deb_heure: '08:00', fin_heure: '17:00' },
             estEnRepos: false,
             estReposFerie: false
@@ -325,7 +341,8 @@ export class AnalyseService {
         travaille_aujourd_hui: false,
         commentaire: `EN CONGÉ - ${verificationConge.conge?.type || 'Congé'} du ${new Date(verificationConge.conge?.date_depart).toLocaleDateString()} au ${new Date(verificationConge.conge?.date_reprise).toLocaleDateString()}`,
         mode_pointage: undefined,
-        lieu_pointage: undefined
+        lieu_pointage: undefined,
+        lieu_travail: employe.lieu_travail
       };
 
       return await this.createAnalyse(analyse);
@@ -366,7 +383,8 @@ export class AnalyseService {
         ? `EN REPOS - Équipe ${employe.equipe} ne travaille pas aujourd'hui` 
         : `Devrait travailler ${employe.planning.deb_heure}-${employe.planning.fin_heure}`,
       mode_pointage: undefined,
-      lieu_pointage: undefined
+      lieu_pointage: undefined,
+      lieu_travail: employe.lieu_travail
     };
 
     // 4. Si aucun pointage
@@ -541,7 +559,7 @@ export class AnalyseService {
     return end <= start; // fin <= début → traverse minuit
   }
 
-  private calculerStatistiques(analyses: AnalyseOutput[]) {
+  public calculerStatistiques(analyses: AnalyseOutput[]) {
     const total = analyses.length;
     const presents = analyses.filter(a => a.statut_final === StatutAnalyse.PRESENT).length;
     const absents = analyses.filter(a => a.statut_final === StatutAnalyse.ABSENT).length;
@@ -679,6 +697,172 @@ export class AnalyseService {
       statistiques_globales: this.calculerStatistiques(analyses),
       top_retardataires: topRetardataires,
       top_absents: topAbsents
+    };
+  }
+
+  // ===== NOUVELLES MÉTHODES POUR ANALYSE ENTRE DEUX DATES =====
+
+  public async getAnalysesPeriode(
+    dateDebut: string, 
+    dateFin: string,
+    page: number = 1,
+    limit: number = 10000,
+    includeRelations: boolean = false
+  ): Promise<{
+    analyses: AnalyseOutput[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    // Créer les dates en utilisant le format YYYY-MM-DD pour éviter les problèmes de fuseau horaire
+    const debut = new Date(dateDebut + 'T00:00:00');
+    const fin = new Date(dateFin + 'T23:59:59');
+
+    // Calculer l'offset pour la pagination
+    const offset = (page - 1) * limit;
+
+    // Requête de base
+    const queryBuilder = analyseRepository()
+      .createQueryBuilder('analyse')
+      .where('analyse.date BETWEEN :debut AND :fin', { debut, fin })
+      .orderBy('analyse.date', 'DESC')
+      .addOrderBy('analyse.matricule', 'ASC')
+      .skip(offset)
+      .take(limit);
+
+    // Ajouter les relations seulement si demandé
+    if (includeRelations) {
+      queryBuilder
+        .leftJoinAndSelect('analyse.user', 'user')
+        .leftJoinAndSelect('user.equipe', 'equipe')
+        .leftJoinAndSelect('user.departement', 'departement')
+        .leftJoinAndSelect('user.lieu', 'lieu');
+    }
+
+    // Compter le total pour la pagination
+    const totalQuery = analyseRepository()
+      .createQueryBuilder('analyse')
+      .where('analyse.date BETWEEN :debut AND :fin', { debut, fin });
+
+    const [analyses, total] = await Promise.all([
+      queryBuilder.getMany(),
+      totalQuery.getCount()
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      analyses,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+  }
+
+  public async getAnalysesEmployePeriode(matricule: string, dateDebut: string, dateFin: string): Promise<AnalyseOutput[]> {
+    // Créer les dates en utilisant le format YYYY-MM-DD pour éviter les problèmes de fuseau horaire
+    const debut = new Date(dateDebut + 'T00:00:00');
+    const fin = new Date(dateFin + 'T23:59:59');
+
+    return await analyseRepository().find({
+      where: {
+        matricule,
+        date: Between(debut, fin)
+      },
+      relations: ['user', 'user.equipe', 'user.departement', 'user.lieu'],
+      order: { date: 'ASC' }
+    });
+  }
+
+  public calculerStatistiquesPeriode(analyses: AnalyseOutput[], dateDebut: string, dateFin: string): any {
+    // Créer les dates en utilisant le format YYYY-MM-DD pour éviter les problèmes de fuseau horaire
+    const debut = new Date(dateDebut + 'T00:00:00');
+    const fin = new Date(dateFin + 'T23:59:59');
+    const totalJours = Math.ceil((fin.getTime() - debut.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    const statistiques = this.calculerStatistiques(analyses);
+    
+    return {
+      ...statistiques,
+      total_jours: totalJours,
+      total_analyses: analyses.length,
+      moyenne_analyses_par_jour: totalJours > 0 ? (analyses.length / totalJours).toFixed(2) : 0
+    };
+  }
+
+  public calculerStatistiquesEmploye(analyses: AnalyseOutput[], dateDebut: string, dateFin: string): any {
+    // Créer les dates en utilisant le format YYYY-MM-DD pour éviter les problèmes de fuseau horaire
+    const debut = new Date(dateDebut + 'T00:00:00');
+    const fin = new Date(dateFin + 'T23:59:59');
+    const totalJours = Math.ceil((fin.getTime() - debut.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    let joursPresents = 0;
+    let joursAbsents = 0;
+    let joursRetards = 0;
+    let joursSortiesAnticipees = 0;
+    let joursConge = 0;
+    let joursRepos = 0;
+    let totalRetardMinutes = 0;
+    let totalSortieAnticipeeMinutes = 0;
+
+    analyses.forEach(analyse => {
+      switch (analyse.statut_final) {
+        case StatutAnalyse.PRESENT:
+          joursPresents++;
+          break;
+        case StatutAnalyse.ABSENT:
+          joursAbsents++;
+          break;
+        case StatutAnalyse.RETARD:
+          joursRetards++;
+          totalRetardMinutes += analyse.retard_minutes;
+          break;
+        case StatutAnalyse.PRESENT_AVEC_RETARD:
+          joursPresents++;
+          joursRetards++;
+          totalRetardMinutes += analyse.retard_minutes;
+          break;
+        case StatutAnalyse.SORTIE_ANTICIPEE:
+          joursSortiesAnticipees++;
+          totalSortieAnticipeeMinutes += analyse.sortie_anticipee_minutes;
+          break;
+        case StatutAnalyse.EN_CONGE:
+          joursConge++;
+          break;
+        case StatutAnalyse.EN_REPOS:
+          joursRepos++;
+          break;
+      }
+    });
+
+    const joursTravail = joursPresents + joursRetards + joursAbsents + joursSortiesAnticipees;
+    const tauxPresence = joursTravail > 0 ? ((joursPresents + joursRetards) / joursTravail * 100).toFixed(2) : 0;
+    const tauxAbsence = joursTravail > 0 ? (joursAbsents / joursTravail * 100).toFixed(2) : 0;
+    const retardMoyenMinutes = joursRetards > 0 ? (totalRetardMinutes / joursRetards).toFixed(2) : 0;
+
+    return {
+      total_jours: totalJours,
+      jours_presents: joursPresents,
+      jours_absents: joursAbsents,
+      jours_retards: joursRetards,
+      jours_sorties_anticipees: joursSortiesAnticipees,
+      jours_conge: joursConge,
+      jours_repos: joursRepos,
+      total_retard_minutes: totalRetardMinutes,
+      total_sortie_anticipee_minutes: totalSortieAnticipeeMinutes,
+      retard_moyen_minutes: parseFloat(retardMoyenMinutes.toString()),
+      taux_presence: parseFloat(tauxPresence.toString()),
+      taux_absence: parseFloat(tauxAbsence.toString())
     };
   }
 }

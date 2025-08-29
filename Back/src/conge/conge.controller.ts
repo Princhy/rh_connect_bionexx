@@ -222,6 +222,97 @@ export class CongeController extends Controller {
         return new CongeService().getCongesByMotif(motif);
     }
 
+    // Récupérer les congés par département
+    @Get("departement/{departementId}")
+    //@Security("jwt", ["admin", "RH", "superviseur"])
+    public async getCongesByDepartement(@Path() departementId: number): Promise<CongeOutput[]> {
+        return new CongeService().getCongesByDepartement(departementId);
+    }
+
+    // Récupérer les congés par département avec filtres
+    @Get("departement-filtres")
+    //@Security("jwt", ["admin", "RH", "superviseur"])
+    public async getCongesByDepartementFiltres(
+        @Query() departementId: number,
+        @Query() statut?: string,
+        @Query() type?: TypeConge,
+        @Query() dateDebut?: string,
+        @Query() dateFin?: string
+    ): Promise<CongeOutput[]> {
+        const congeService = new CongeService();
+        
+        const filters: any = {};
+        if (statut) filters.statut = statut;
+        if (type) filters.type = type;
+        if (dateDebut && dateFin) {
+            filters.dateDebut = new Date(dateDebut);
+            filters.dateFin = new Date(dateFin);
+        }
+        
+        return await congeService.getCongesByDepartementWithFilters(departementId, filters);
+    }
+
+    // Récupérer les statistiques des congés par département
+    @Get("departement-stats/{departementId}")
+    @Security("jwt", ["admin", "RH", "superviseur"])
+    public async getCongesStatsByDepartement(
+        @Path() departementId: number,
+        @Query() annee?: number
+    ): Promise<{
+        departementId: number;
+        totalConges: number;
+        congesValides: number;
+        congesEnAttente: number;
+        congesRefuses: number;
+        totalJours: number;
+        repartitionParType: any;
+        repartitionParMois: any;
+    }> {
+        const congeService = new CongeService();
+        const conges = await congeService.getCongesByDepartement(departementId);
+        
+        // Filtrer par année si spécifiée
+        let congesFiltres = conges;
+        if (annee) {
+            congesFiltres = conges.filter(conge => {
+                const dateDepart = new Date(conge.date_depart);
+                return dateDepart.getFullYear() === annee;
+            });
+        }
+        
+        // Calculer les statistiques
+        const totalConges = congesFiltres.length;
+        const congesValides = congesFiltres.filter(c => c.statut === 'VALIDE').length;
+        const congesEnAttente = congesFiltres.filter(c => c.statut === 'ATTENTE').length;
+        const congesRefuses = congesFiltres.filter(c => c.statut === 'REFUSE').length;
+        const totalJours = congesFiltres.reduce((sum, conge) => sum + conge.nbr_jours_permis, 0);
+        
+        // Répartition par type
+        const repartitionParType = congesFiltres.reduce((acc, conge) => {
+            acc[conge.type] = (acc[conge.type] || 0) + 1;
+            return acc;
+        }, {} as any);
+        
+        // Répartition par mois
+        const repartitionParMois = congesFiltres.reduce((acc, conge) => {
+            const dateDepart = new Date(conge.date_depart);
+            const mois = dateDepart.getMonth() + 1;
+            acc[mois] = (acc[mois] || 0) + 1;
+            return acc;
+        }, {} as any);
+        
+        return {
+            departementId,
+            totalConges,
+            congesValides,
+            congesEnAttente,
+            congesRefuses,
+            totalJours,
+            repartitionParType,
+            repartitionParMois
+        };
+    }
+
     // Récupérer les congés en cours
     @Get("en-cours")
     @Security("jwt", ["admin", "RH", "superviseur"])

@@ -13,7 +13,9 @@ import LocationCityIcon from '@mui/icons-material/LocationCity';
 import Diversity3TwoToneIcon from '@mui/icons-material/Diversity3TwoTone';
 import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import DetailsIcon from '@mui/icons-material/Details';
+import PersonIcon from '@mui/icons-material/Person';
 import InsertInvitationIcon from '@mui/icons-material/InsertInvitation';
+//import CalendarViewMonthIcon from '@mui/icons-material/CalendarViewMonth';
 import { useAuth } from '../config/authConfig';
 //import ReferenceManager from '../pages/ref';
 
@@ -31,6 +33,8 @@ const MENU_CONFIG = {
     { path: '/equipes', label: 'Equipes', icon: <Diversity3TwoToneIcon /> },
     { path: '/pointages', label: 'Pointages', icon: <FingerprintIcon /> },
     { path: '/analyses', label: 'Analyses', icon: <DetailsIcon /> },
+    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <PersonIcon /> },
+    { path: '/analyse-periode', label: 'Analyse par Période', icon: <DetailsIcon /> },
     { path: '/conges', label: 'Congés', icon: <InsertInvitationIcon /> }
   ],
   RH: [
@@ -40,16 +44,20 @@ const MENU_CONFIG = {
     { path: '/equipes', label: 'Equipes', icon: <Diversity3TwoToneIcon /> },
     { path: '/pointages', label: 'Pointages', icon: <FingerprintIcon /> },
     { path: '/analyses', label: 'Analyses', icon: <DetailsIcon /> },
+    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <PersonIcon /> },
+    { path: '/analyse-periode', label: 'Analyse par Période', icon: <DetailsIcon /> },
     { path: '/conges', label: 'Congés', icon: <InsertInvitationIcon /> }
   ],
   Superviseur: [
     { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
     { path: '/employe', label: 'Employés', icon: <PeopleIcon /> },
     { path: '/analyses', label: 'Analyses', icon: <DetailsIcon /> },
+    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <PersonIcon /> },
     { path: '/conges', label: 'Congés', icon: <InsertInvitationIcon /> }
   ],
   Employe: [
     { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
+    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <PersonIcon /> },
     { path: '/conges', label: 'Congés', icon: <InsertInvitationIcon /> }
   ]
 };

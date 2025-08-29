@@ -67,6 +67,9 @@ export class Analyse {
   @Column({ length: 100, nullable: true })
   lieu_pointage: string;
 
+  @Column({ length: 100, nullable: true })
+  lieu_travail: string;
+
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   date_analyse: Date;
 
@@ -92,6 +95,7 @@ export interface IAnalyse {
   commentaire?: string;
   mode_pointage?: ModePointage;
   lieu_pointage?: string;
+  lieu_travail?: string;
   date_analyse: Date;
    cycle_travail_debut?: Date;
   cycle_travail_fin?: Date;

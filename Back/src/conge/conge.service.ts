@@ -13,6 +13,19 @@ export class CongeService {
     }
 
     public async createConge(params: CongeCreateParams): Promise<IConge> {
+        // Récupérer le département de l'utilisateur si pas fourni
+        if (!params.departement_id) {
+            const user = await congeRepository()
+                .createQueryBuilder("conge")
+                .leftJoin("user", "user", "user.matricule = :matricule", { matricule: params.matricule })
+                .select("user.id_departement", "id_departement")
+                .getRawOne();
+            
+            if (user) {
+                params.departement_id = user.id_departement;
+            }
+        }
+
         const conge = congeRepository().create(params);
         return await congeRepository().save(conge);
     }
@@ -57,6 +70,47 @@ export class CongeService {
             relations: ['user'],
 
         });
+    }
+
+    public async getCongesByDepartement(departementId: number): Promise<CongeOutput[]> {
+        return await congeRepository().find({
+            where: { departement_id: departementId },
+            relations: ['user'],
+            order: { date_depart: 'ASC' }
+        });
+    }
+
+    public async getCongesByDepartementWithFilters(
+        departementId: number, 
+        filters?: {
+            statut?: string;
+            type?: TypeConge;
+            dateDebut?: Date;
+            dateFin?: Date;
+        }
+    ): Promise<CongeOutput[]> {
+        let query = congeRepository().createQueryBuilder("conge")
+            .leftJoinAndSelect("conge.user", "user")
+            .where("conge.departement_id = :departementId", { departementId });
+
+        if (filters?.statut) {
+            query = query.andWhere("conge.statut = :statut", { statut: filters.statut });
+        }
+
+        if (filters?.type) {
+            query = query.andWhere("conge.type = :type", { type: filters.type });
+        }
+
+        if (filters?.dateDebut && filters?.dateFin) {
+            query = query.andWhere("conge.date_depart BETWEEN :dateDebut AND :dateFin", {
+                dateDebut: filters.dateDebut,
+                dateFin: filters.dateFin
+            });
+        }
+
+        return await query
+            .orderBy("conge.date_depart", "ASC")
+            .getMany();
     }
 
     public async getCongesByDateRange(dateDebut: Date, dateFin: Date): Promise<CongeOutput[]> {

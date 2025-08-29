@@ -29,7 +29,8 @@ import {
   Paper,
   useTheme,
   alpha,
-  darken
+  darken,
+  Skeleton
 } from '@mui/material';
 import {
   CheckCircle as CheckIcon,
@@ -85,6 +86,7 @@ interface AnalyseOutput {
   commentaire?: string;
   mode_pointage: string;
   lieu_pointage: string;
+  lieu_travail?: string;
   date_analyse: Date;
   user?: {
     id_user: number;
@@ -136,10 +138,13 @@ const Analyse = () => {
   
   // États principaux
   const [analyses, setAnalyses] = useState<AnalyseOutput[]>([]);
+  const [filteredAnalyses, setFilteredAnalyses] = useState<AnalyseOutput[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFiltering, setIsFiltering] = useState(false);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+  const [selectedLieuTravail, setSelectedLieuTravail] = useState<string>('all');
   
   // États pour les statistiques et dashboard
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -155,6 +160,22 @@ const Analyse = () => {
     mode_pointage: ''
   });
 
+  // Obtenir la liste unique des lieux de travail
+  const getLieuxTravail = (analysesData: AnalyseOutput[]): string[] => {
+    const lieux = analysesData
+      .map(analyse => analyse.lieu_travail)
+      .filter((lieu): lieu is string => lieu !== undefined && lieu !== null && lieu !== '');
+    return [...new Set(lieux)].sort();
+  };
+
+  // Appliquer le filtre par lieu de travail
+  const applyLieuTravailFilter = (analysesData: AnalyseOutput[], lieuFilter: string) => {
+    if (lieuFilter === 'all') {
+      return analysesData;
+    }
+    return analysesData.filter(analyse => analyse.lieu_travail === lieuFilter);
+  };
+
   // Charger les analyses pour la date sélectionnée
   const loadAnalyses = async (date: string) => {
     setIsLoading(true);
@@ -163,9 +184,15 @@ const Analyse = () => {
       setAnalyses(response.data);
       //console.log(response)
       
+      // Appliquer le filtre par lieu de travail
+      const filteredData = applyLieuTravailFilter(response.data, selectedLieuTravail);
+      setFilteredAnalyses(filteredData);
+      
       // Calculer les statistiques si des analyses existent
       if (response.data.length > 0) {
-        calculateStats(response.data);
+        // Appliquer le filtre par lieu de travail pour les statistiques
+        const filteredData = applyLieuTravailFilter(response.data, selectedLieuTravail);
+        calculateStats(filteredData);
       } else {
         setStats(null);
       }
@@ -343,8 +370,8 @@ const Analyse = () => {
     );
   };
 
-  // Fonction d'export PDF
-  const handleExportRows = (rows: MRT_Row<AnalyseOutput>[]) => {
+  // Fonction d'export PDF pour les données filtrées
+  const handleExportFilteredData = (data: AnalyseOutput[]) => {
     const doc = new jsPDF('landscape'); // Mode paysage pour plus d'espace
     
     // Titre du document
@@ -353,22 +380,27 @@ const Analyse = () => {
     doc.setFontSize(11);
     doc.text(`Date analysée: ${new Date(selectedDate).toLocaleDateString('fr-FR')}`, 14, 30);
     doc.text(`Généré le: ${new Date().toLocaleString('fr-FR')}`, 14, 36);
+    if (selectedLieuTravail !== 'all') {
+      doc.text(`Lieu de travail filtré: ${selectedLieuTravail}`, 14, 42);
+      doc.text(`Données filtrées: ${filteredAnalyses.length} employés sur ${analyses.length} total`, 14, 48);
+    }
 
-    const tableData = rows.map((row) => [
-      row.original.matricule,
-      `${row.original.user?.prenom || ''} ${row.original.user?.nom || ''}`,
-      row.original.user?.equipe?.equipe || 'N/A',
-      row.original.statut_final.replace('_', ' ').toUpperCase(),
-      row.original.heure_prevue_arrivee || '-',
-      row.original.heure_reelle_arrivee || '-',
-      row.original.retard_minutes > 0 ? `${row.original.retard_minutes} min` : '-',
-      row.original.heure_prevue_depart || '-',
-      row.original.heure_reelle_depart || '-',
-      row.original.sortie_anticipee_minutes > 0 ? `${row.original.sortie_anticipee_minutes} min` : '-',
-      row.original.justifie ? 'Oui' : 'Non',
-      row.original.mode_pointage || '-',
-      row.original.lieu_pointage || '-',
-      row.original.commentaire || '-'
+    const tableData = data.map((row) => [
+      row.matricule,
+      `${row.user?.prenom || ''} ${row.user?.nom || ''}`,
+      row.user?.equipe?.equipe || 'N/A',
+      row.statut_final.replace('_', ' ').toUpperCase(),
+      row.heure_prevue_arrivee || '-',
+      row.heure_reelle_arrivee || '-',
+      row.retard_minutes > 0 ? `${row.retard_minutes} min` : '-',
+      row.heure_prevue_depart || '-',
+      row.heure_reelle_depart || '-',
+      row.sortie_anticipee_minutes > 0 ? `${row.sortie_anticipee_minutes} min` : '-',
+      row.justifie ? 'Oui' : 'Non',
+      row.mode_pointage || '-',
+      row.lieu_pointage || '-',
+      row.lieu_travail || '-',
+      row.commentaire || '-'
     ]);
 
     const tableHeaders = [
@@ -384,24 +416,53 @@ const Analyse = () => {
       'Sortie Ant.',
       'Justifié',
       'Mode',
-      'Lieu',
+      'Lieu Pointage',
+      'Lieu Travail',
       'Commentaire'
     ];
 
     autoTable(doc, {
       head: [tableHeaders],
       body: tableData,
-      startY: 42,
+      startY: selectedLieuTravail !== 'all' ? 54 : 42,
       styles: { fontSize: 7 },
       headStyles: { fillColor: [71, 85, 105] },
       columnStyles: {
-        13: { cellWidth: 25 } // Commentaire plus large
+        14: { cellWidth: 25 } // Commentaire plus large
       },
       margin: { left: 10, right: 10 }
     });
 
     doc.save(`analyse-presences-${selectedDate}.pdf`);
   };
+
+  // Fonction d'export PDF pour les lignes du tableau
+  const handleExportRows = (rows: MRT_Row<AnalyseOutput>[]) => {
+    const data = rows.map(row => row.original);
+    handleExportFilteredData(data);
+  };
+  // Composant Skeleton pour les statistiques
+  const StatsSkeleton = () => (
+    <Box sx={{ mb: 3 }}>
+      <Paper sx={{ p: 2 }}>
+        <Skeleton variant="text" width="60%" height={32} sx={{ mb: 2 }} />
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+          {[1, 2, 3, 4, 5, 6].map((index) => (
+            <Box key={index} sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
+              <Card sx={{ height: 120 }}>
+                <CardContent sx={{ textAlign: 'center', py: 2 }}>
+                  <Skeleton variant="circular" width={28} height={28} sx={{ mb: 1, mx: 'auto' }} />
+                  <Skeleton variant="text" width="60%" height={40} sx={{ mb: 1, mx: 'auto' }} />
+                  <Skeleton variant="text" width="80%" height={20} sx={{ mx: 'auto' }} />
+                </CardContent>
+              </Card>
+            </Box>
+          ))}
+        </Box>
+      </Paper>
+    </Box>
+  );
+
   // Formatage des heures
   const formatHeure = (heure?: string) => {
     if (!heure) return <Typography variant="body2" color="text.secondary">-</Typography>;
@@ -654,13 +715,32 @@ const Analyse = () => {
           );
         },
       },
+      {
+        accessorKey: 'lieu_travail',
+        header: 'Lieu de Travail',
+        size: 140,
+        Cell: ({ cell }) => {
+          const lieuTravail = cell.getValue<string>();
+          return lieuTravail ? (
+            <Chip 
+              icon={<LocationIcon />}
+              label={lieuTravail}
+              color="primary"
+              size="small"
+              variant="outlined"
+            />
+          ) : (
+            <Typography variant="body2" color="text.secondary">N/A</Typography>
+          );
+        },
+      },
     ],
     []
   );
 
   const table = useMaterialReactTable({
     columns,
-    data: analyses,
+    data: filteredAnalyses,
     state: {
       isLoading,
     },
@@ -678,8 +758,18 @@ const Analyse = () => {
     renderTopToolbarCustomActions: ({ table }) => (
       <Box sx={{ display: 'flex', gap: '16px', padding: '8px', flexWrap: 'wrap' }}>
         <Button
-          disabled={table.getPrePaginationRowModel().rows.length === 0}
-          onClick={() => handleExportRows(table.getPrePaginationRowModel().rows)}
+          disabled={filteredAnalyses.length === 0}
+          onClick={() => handleExportFilteredData(filteredAnalyses)}
+          startIcon={<FileDownloadIcon />}
+          variant="outlined"
+          color='info'
+          size="small"
+        >
+          Export Filtre
+        </Button>
+        <Button
+          disabled={analyses.length === 0}
+          onClick={() => handleExportFilteredData(analyses)}
           startIcon={<FileDownloadIcon />}
           variant="outlined"
           color='info'
@@ -716,6 +806,21 @@ const Analyse = () => {
     loadAnalyses(selectedDate);
   }, [selectedDate]);
 
+  // Effect pour appliquer le filtre quand il change
+  useEffect(() => {
+    if (analyses.length > 0) {
+      setIsFiltering(true);
+      
+      // Délai court pour montrer le skeleton
+      setTimeout(() => {
+        const filteredData = applyLieuTravailFilter(analyses, selectedLieuTravail);
+        setFilteredAnalyses(filteredData);
+        calculateStats(filteredData);
+        setIsFiltering(false);
+      }, 50);
+    }
+  }, [selectedLieuTravail, analyses]);
+
   return (
     <Container maxWidth="xl" className="pt-20">
       {/* En-tête avec titre et actions */}
@@ -735,6 +840,21 @@ const Analyse = () => {
               InputLabelProps={{ shrink: true }}
               size="small"
             />
+            <FormControl size="small" sx={{ minWidth: 200 }}>
+              <InputLabel>Lieu de travail</InputLabel>
+              <Select
+                value={selectedLieuTravail}
+                onChange={(e) => setSelectedLieuTravail(e.target.value)}
+                label="Lieu de travail"
+              >
+                <MenuItem value="all">Tous les lieux</MenuItem>
+                {getLieuxTravail(analyses).map((lieu) => (
+                  <MenuItem key={lieu} value={lieu}>
+                    {lieu}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <Button
               variant="contained"
               color="secondary"
@@ -757,11 +877,21 @@ const Analyse = () => {
       </Box>
 
       {/* Statistiques Dashboard */}
-      {stats && (
+      {isFiltering ? (
+        <StatsSkeleton />
+      ) : stats ? (
         <Box sx={{ mb: 3 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" gutterBottom>
               📈 Statistiques du {new Date(selectedDate).toLocaleDateString('fr-FR')}
+              {selectedLieuTravail !== 'all' && (
+                <Chip 
+                  label={`Filtré: ${selectedLieuTravail}`}
+                  color="primary"
+                  size="small"
+                  sx={{ ml: 2 }}
+                />
+              )}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
               {/* Carte Présents */}
@@ -955,7 +1085,7 @@ const Analyse = () => {
             </Box>
           </Paper>
         </Box>
-      )}
+      ) : null}
 
       {/* Message si aucune analyse */}
       {analyses.length === 0 && !isLoading && (
@@ -967,9 +1097,35 @@ const Analyse = () => {
         </Alert>
       )}
 
+              {/* Indicateur de filtrage */}
+        {analyses.length > 0 && selectedLieuTravail !== 'all' && (
+          isFiltering ? (
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Skeleton variant="circular" width={16} height={16} />
+                <Skeleton variant="text" width="60%" height={20} />
+              </Box>
+            </Alert>
+          ) : (
+            <Alert severity="info" sx={{ mb: 3 }}>
+              <Typography>
+                📍 Filtrage par lieu de travail : <strong>{selectedLieuTravail}</strong> 
+                ({filteredAnalyses.length} analyse{filteredAnalyses.length > 1 ? 's' : ''} sur {analyses.length} total)
+              </Typography>
+            </Alert>
+          )
+        )}
+
       {/* Tableau des analyses */}
       {isLoading ? (
         <LinearProgress color="secondary" />
+      ) : isFiltering ? (
+        <Box sx={{ mb: 3 }}>
+          <Paper sx={{ p: 2 }}>
+            <Skeleton variant="text" width="40%" height={24} sx={{ mb: 2 }} />
+            <Skeleton variant="rectangular" width="100%" height={400} />
+          </Paper>
+        </Box>
       ) : (
         <MaterialReactTable table={table} />
       )}

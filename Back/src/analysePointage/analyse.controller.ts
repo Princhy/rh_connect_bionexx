@@ -26,8 +26,6 @@ export class AnalyseController extends Controller {
 
   // ===== CRUD BASIQUE =====
 
-  
-
   @Post()
   @Security("jwt", ["admin", "RH"])
   public async createAnalyse(@Body() requestBody: AnalyseCreationParams): Promise<AnalyseValidationResult> {
@@ -94,13 +92,13 @@ export class AnalyseController extends Controller {
     return new AnalyseService().getAnalysesByMatricule(matricule);
   }
 
-  @Get("statut/{statut}")
+  @Get("lieu-travail/{lieuTravail}")
   //@Security("jwt", ["admin", "RH", "superviseur"])
-  public async getAnalysesByStatut(
-    @Path() statut: StatutAnalyse,
+  public async getAnalysesByLieuTravail(
+    @Path() lieuTravail: string,
     @Query() date?: string
   ): Promise<AnalyseOutput[]> {
-    return new AnalyseService().getAnalysesByStatut(statut, date);
+    return new AnalyseService().getAnalysesByLieuTravail(lieuTravail, date);
   }
 
   // ===== ANALYSE PRINCIPALE =====
@@ -172,12 +170,6 @@ export class AnalyseController extends Controller {
     return new AnalyseService().getRetardsDuJour(date);
   }
 
-  @Get("absents/{date}")
-  @Security("jwt", ["admin", "RH", "superviseur"])
-  public async getAbsentsDuJour(@Path() date: string): Promise<AnalyseOutput[]> {
-    return new AnalyseService().getAbsentsDuJour(date);
-  }
-
   @Get("sorties-anticipees/{date}")
   @Security("jwt", ["admin", "RH", "superviseur"])
   public async getSortiesAnticipeesDuJour(@Path() date: string): Promise<AnalyseOutput[]> {
@@ -214,7 +206,7 @@ export class AnalyseController extends Controller {
       }
 
       const analyseService = new AnalyseService();
-      const statistiques = (analyseService as any).calculerStatistiques(analyses);
+      const statistiques = analyseService.calculerStatistiques(analyses);
 
       return {
         date,
@@ -222,6 +214,144 @@ export class AnalyseController extends Controller {
       };
     } catch (error) {
       throw new Error(`Erreur calcul statistiques: ${error}`);
+    }
+  }
+
+  // ===== NOUVELLES FONCTIONNALITÉS D'ANALYSE ENTRE DEUX DATES =====
+
+  @Get("analyse-periode/{dateDebut}/{dateFin}")
+  //@Security("jwt", ["admin", "RH", "superviseur"])
+  public async getAnalysesPeriode(
+    @Path() dateDebut: string,
+    @Path() dateFin: string,
+    @Query() page?: number,
+    @Query() limit?: number,
+    @Query() includeRelations?: boolean
+  ): Promise<{
+    periode: string;
+    analyses: AnalyseOutput[];
+    pagination?: any;
+    statistiques: any;
+  }> {
+    try {
+      if (!dateDebut || !dateFin) {
+        throw new Error("dateDebut et dateFin sont requis");
+      }
+
+      const analyseService = new AnalyseService();
+      
+      // Paramètres par défaut optimisés pour la performance
+      const pageNum = page || 1;
+      const limitNum = limit || 10000; // Limite élevée par défaut
+      const includeRel = includeRelations || false; // Relations désactivées par défaut
+      
+      console.log(`📊 Récupération analyses période ${dateDebut} à ${dateFin} - Page ${pageNum}, Limit ${limitNum}, Relations: ${includeRel}`);
+
+      // Utiliser la méthode optimisée
+      const result = await analyseService.getAnalysesPeriode(dateDebut, dateFin, pageNum, limitNum, includeRel);
+      
+      if (result.analyses.length === 0) {
+        return {
+          periode: `${dateDebut} au ${dateFin}`,
+          analyses: [],
+          pagination: result.pagination,
+          statistiques: {
+            message: "Aucune analyse trouvée pour cette période",
+            total_jours: 0,
+            total_analyses: 0,
+            presents: 0,
+            absents: 0,
+            retards: 0,
+            sorties_anticipees: 0,
+            presents_avec_retard: 0,
+            en_conge: 0,
+            en_repos: 0,
+            taux_presence: 0,
+            taux_absence: 0,
+            retard_moyen_minutes: 0
+          }
+        };
+      }
+
+      // Calculer les statistiques sur les analyses récupérées
+      const statistiques = analyseService.calculerStatistiquesPeriode(result.analyses, dateDebut, dateFin);
+
+      console.log(`✅ ${result.analyses.length} analyses récupérées (${result.pagination.total} total) en ${result.pagination.totalPages} pages`);
+
+      return {
+        periode: `${dateDebut} au ${dateFin}`,
+        analyses: result.analyses,
+        pagination: result.pagination,
+        statistiques
+      };
+    } catch (error) {
+      throw new Error(`Erreur analyse période: ${error}`);
+    }
+  }
+
+
+
+
+  @Get("employe/{matricule}/periode")
+  //@Security("jwt", ["admin", "RH", "superviseur"])
+  public async getAnalyseEmployePeriode(
+    @Path() matricule: string,
+    @Query() dateDebut: string,
+    @Query() dateFin: string
+  ): Promise<{
+    employe: any;
+    periode: string;
+    analyses: AnalyseOutput[];
+    statistiques_employe: any;
+  }> {
+    try {
+      if (!dateDebut || !dateFin) {
+        throw new Error("dateDebut et dateFin sont requis");
+      }
+
+      const analyseService = new AnalyseService();
+      const analyses = await analyseService.getAnalysesEmployePeriode(matricule, dateDebut, dateFin);
+      
+      if (analyses.length === 0) {
+        return {
+          employe: null,
+          periode: `${dateDebut} au ${dateFin}`,
+          analyses: [],
+          statistiques_employe: {
+            message: "Aucune analyse trouvée pour cet employé sur cette période",
+            matricule,
+            periode: `${dateDebut} au ${dateFin}`,
+            total_jours: 0,
+            jours_presents: 0,
+            jours_absents: 0,
+            jours_retards: 0,
+            jours_sorties_anticipees: 0,
+            jours_conge: 0,
+            jours_repos: 0,
+            total_retard_minutes: 0,
+            total_sortie_anticipee_minutes: 0,
+            retard_moyen_minutes: 0,
+            taux_presence: 0,
+            taux_absence: 0
+          }
+        };
+      }
+
+      const statistiques = analyseService.calculerStatistiquesEmploye(analyses, dateDebut, dateFin);
+      const employe = analyses[0]?.user;
+
+      return {
+        employe,
+        periode: `${dateDebut} au ${dateFin}`,
+        analyses,
+        statistiques_employe: {
+          matricule,
+          periode: `${dateDebut} au ${dateFin}`,
+          ...statistiques
+        }
+      };
+    } catch (error) {
+      throw new Error(`Erreur analyse employé période: ${error}`);
     }
   }
 
@@ -286,179 +416,6 @@ export class AnalyseController extends Controller {
         success: false,
         message: `Erreur lors de la justification: ${error}`
       };
-    }
-  }
-
-  // ===== RAPPORTS ET DASHBOARDS =====
-
-  @Get("dashboard-aujourdhui")
-  //@Security("jwt", ["admin", "RH", "superviseur"])
-  public async getDashboardAujourdhui(): Promise<{
-    date: string;
-    heure_actuelle: string;
-    analyses_disponibles: boolean;
-    statistiques?: any;
-    retards?: AnalyseOutput[];
-    absents?: AnalyseOutput[];
-    alertes?: string[];
-  }> {
-    try {
-      const maintenant = new Date();
-      const aujourdhui = maintenant.toISOString().split('T')[0];
-      const heureActuelle = maintenant.toLocaleTimeString('fr-FR');
-      
-      const analyseService = new AnalyseService();
-      
-      // Vérifier si des analyses existent pour aujourd'hui
-      const analyses = await analyseService.getAnalysesByDate(aujourdhui);
-      
-      if (analyses.length === 0) {
-        return {
-          date: aujourdhui,
-          heure_actuelle: heureActuelle,
-          analyses_disponibles: false,
-          alertes: ["Aucune analyse disponible pour aujourd'hui. Lancez l'analyse de la journée."]
-        };
-      }
-
-      const [retards, absents] = await Promise.all([
-        analyseService.getRetardsDuJour(aujourdhui),
-        analyseService.getAbsentsDuJour(aujourdhui)
-      ]);
-
-      const statistiques = (analyseService as any).calculerStatistiques(analyses);
-      
-      const alertes = [];
-      if (absents.length > 0) {
-        alertes.push(`🚨 ${absents.length} employé(s) absent(s)`);
-      }
-      if (retards.length > 5) {
-        alertes.push(`⏰ ${retards.length} employé(s) en retard`);
-      }
-      if (statistiques.taux_presence < 80) {
-        alertes.push(`📉 Taux de présence faible: ${statistiques.taux_presence}%`);
-      }
-
-      return {
-        date: aujourdhui,
-        heure_actuelle: heureActuelle,
-        analyses_disponibles: true,
-        statistiques,
-        retards: retards.slice(0, 10), // Top 10 retards
-        absents: absents.slice(0, 20), // Top 20 absents
-        alertes
-      };
-    } catch (error) {
-      console.error("Erreur dashboard:", error);
-      throw error;
-    }
-  }
-
-  @Get("dashboard-temps-reel")
-  //@Security("jwt", ["admin", "RH", "superviseur"])
-  public async getDashboardTempsReel(): Promise<{
-    date: string;
-    heure_actuelle: string;
-    analyses_jour: AnalyseOutput[];
-    retards_actuels: AnalyseOutput[];
-    absents_actuels: AnalyseOutput[];
-    statistiques: any;
-    alertes_non_justifiees: number;
-  }> {
-    try {
-      const maintenant = new Date();
-      const aujourdhui = maintenant.toISOString().split('T')[0];
-      const heureActuelle = maintenant.toLocaleTimeString('fr-FR');
-
-      const analyseService = new AnalyseService();
-      
-      const [analyses, retards, absents] = await Promise.all([
-        analyseService.getAnalysesByDate(aujourdhui),
-        analyseService.getRetardsDuJour(aujourdhui),
-        analyseService.getAbsentsDuJour(aujourdhui)
-      ]);
-
-      const statistiques = analyses.length > 0 ? (analyseService as any).calculerStatistiques(analyses) : {
-        total_employes: 0,
-        presents: 0,
-        absents: 0,
-        retards: 0,
-        sorties_anticipees: 0,
-        presents_avec_retard: 0,
-        en_conge: 0,
-        en_repos: 0,
-        taux_presence: 0,
-        taux_absence: 0,
-        retard_moyen_minutes: 0
-      };
-
-      const alertesNonJustifiees = [...retards, ...absents].filter(a => !a.justifie).length;
-
-      return {
-        date: aujourdhui,
-        heure_actuelle: heureActuelle,
-        analyses_jour: analyses,
-        retards_actuels: retards,
-        absents_actuels: absents,
-        statistiques,
-        alertes_non_justifiees: alertesNonJustifiees
-      };
-    } catch (error) {
-      console.error("Erreur dashboard temps réel:", error);
-      throw error;
-    }
-  }
-
-  @Get("rapport-periode")
-  //@Security("jwt", ["admin", "RH"])
-  public async getRapportPeriode(
-    @Query() dateDebut: string,
-    @Query() dateFin: string
-  ): Promise<{
-    periode: string;
-    analyses: AnalyseOutput[];
-    statistiques_globales: any;
-    top_retardataires: any[];
-    top_absents: any[];
-  }> {
-    try {
-      if (!dateDebut || !dateFin) {
-        throw new Error("dateDebut et dateFin sont requis");
-      }
-
-      return await new AnalyseService().getRapportPeriode(dateDebut, dateFin);
-    } catch (error) {
-      throw new Error(`Erreur génération rapport: ${error}`);
-    }
-  }
-
-  @Get("rapport-mensuel/{annee}/{mois}")
-  //@Security("jwt", ["admin", "RH"])
-  public async getRapportMensuel(
-    @Path() annee: number,
-    @Path() mois: number
-  ): Promise<{
-    mois: string;
-    statistiques_globales: any;
-    analyses: AnalyseOutput[];
-    retardataires_du_mois: any[];
-    absents_du_mois: any[];
-  }> {
-    try {
-      const debutMois = new Date(annee, mois - 1, 1).toISOString().split('T')[0];
-      const finMois = new Date(annee, mois, 0).toISOString().split('T')[0];
-      
-      const rapport = await new AnalyseService().getRapportPeriode(debutMois, finMois);
-      
-      return {
-        mois: `${mois.toString().padStart(2, '0')}/${annee}`,
-        statistiques_globales: rapport.statistiques_globales,
-        analyses: rapport.analyses,
-        retardataires_du_mois: rapport.top_retardataires,
-        absents_du_mois: rapport.top_absents
-      };
-    } catch (error) {
-      throw new Error(`Erreur rapport mensuel: ${error}`);
     }
   }
 
@@ -559,12 +516,13 @@ export class AnalyseController extends Controller {
       };
     }
   }
-//CONGE
-@Get("en-repos/{date}")
-//@Security("jwt", ["admin", "RH", "superviseur"])
-public async getEmployesEnRepos(@Path() date: string): Promise<AnalyseOutput[]> {
-  return new AnalyseService().getEmployesEnRepos(date);
-}
+
+  @Get("en-repos/{date}")
+  //@Security("jwt", ["admin", "RH", "superviseur"])
+  public async getEmployesEnRepos(@Path() date: string): Promise<AnalyseOutput[]> {
+    return new AnalyseService().getEmployesEnRepos(date);
+  }
+
   // ===== EXPORTS =====
 
   @Get("export-csv/{date}")

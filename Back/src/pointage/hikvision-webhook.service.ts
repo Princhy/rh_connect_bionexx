@@ -204,15 +204,57 @@ export class HikvisionWebhookService {
    * Mappe les données Hikvision vers le format de pointage
    */
   private mapPointageData(acsEvent: any, eventData: HikvisionEventData, pointeuse: any) {
+    // Générer un serialNo unique basé sur le timestamp et le matricule
+    const timestamp = new Date(eventData.dateTime).getTime();
+    const matriculeHash = this.hashMatricule(acsEvent.employeeNoString);
+    const uniqueSerialNo = timestamp + matriculeHash;
+    
+    // Traitement de la date avec gestion du fuseau horaire
+    let pointageDate;
+    try {
+      // Si la date vient de la pointeuse, elle est déjà en heure locale
+      // Sinon, on la convertit en heure locale
+      if (eventData.dateTime.includes('T') && eventData.dateTime.includes('Z')) {
+        // Format UTC ISO, on la convertit en heure locale
+        pointageDate = new Date(eventData.dateTime);
+      } else {
+        // Format local, on l'utilise directement
+        pointageDate = new Date(eventData.dateTime);
+      }
+      
+      // Log pour debug
+      if (shouldLog()) {
+        console.log(`🕐 Date originale: ${eventData.dateTime}`);
+        console.log(`🕐 Date traitée: ${pointageDate.toISOString()}`);
+        console.log(`🕐 Date locale: ${pointageDate.toLocaleString('fr-FR', { timeZone: 'Indian/Antananarivo' })}`);
+      }
+    } catch (error) {
+      console.error('❌ Erreur traitement date:', error);
+      pointageDate = new Date(); // Date actuelle en fallback
+    }
+    
     return {
       matricule: acsEvent.employeeNoString,
       type: this.mapAttendanceStatus(acsEvent.attendanceStatus || 'checkIn'),
-      date: new Date(eventData.dateTime),
+      date: pointageDate,
       mode: ModePointage.BIO,
       statut: StatutPointage.NORMAL,
       id_pointeuse: pointeuse.id_pointeuse,
-      serialNo: acsEvent.serialNo
+      serialNo: uniqueSerialNo
     };
+  }
+
+  /**
+   * Génère un hash simple pour le matricule
+   */
+  private hashMatricule(matricule: string): number {
+    let hash = 0;
+    for (let i = 0; i < matricule.length; i++) {
+      const char = matricule.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
   }
 
   /**

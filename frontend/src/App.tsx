@@ -16,6 +16,8 @@ const TeamManager = lazy(() => import('./pages/Equipe'));
 const Pointage = lazy(()=> import('./pages/Pointage'));
 const Analyse = lazy(()=>import('./pages/Analyse'));
 const Conges= lazy(()=>import('./pages/Conge'));
+const AnalyseEmploye = lazy(()=>import('./pages/AnalyseEmploye'));
+const AnalysePeriode = lazy(()=>import('./pages/AnalysePeriode'));
 const UnauthorizedPage = lazy(() => import('./pages/Unauthorized'));
 const theme = createTheme({
   palette: {
@@ -97,6 +99,16 @@ function App() {
               
               {/* Pages accessibles à tous les rôles connectés */}
               <Route path='/conges' element={<Conges/>} />
+              <Route path='/analyse-employe' element={
+                <ProtectedRoute allowedRoles={['Admin', 'RH', 'Superviseur', 'Employe']}>
+                  <AnalyseEmploye/>
+                </ProtectedRoute>
+              } />
+              <Route path='/analyse-periode' element={
+                <ProtectedRoute allowedRoles={['Admin', 'RH', 'Superviseur', 'Employe']}>
+                  <AnalysePeriode/>
+                </ProtectedRoute>
+              } />
             </Route>
           </Routes>
         </Suspense>

@@ -1270,6 +1270,10 @@
 					"statut": {
 						"$ref": "#/components/schemas/StatutConge"
 					},
+					"departement_id": {
+						"type": "number",
+						"format": "double"
+					},
 					"user": {
 						"properties": {
 							"email": {
@@ -1385,6 +1389,10 @@
 					},
 					"statut": {
 						"$ref": "#/components/schemas/StatutConge"
+					},
+					"departement_id": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -1445,6 +1453,10 @@
 					},
 					"statut": {
 						"$ref": "#/components/schemas/StatutConge"
+					},
+					"departement_id": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"type": "object",
@@ -1558,7 +1570,7 @@
 				],
 				"type": "string"
 			},
-			"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_": {
+			"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_": {
 				"properties": {
 					"matricule": {
 						"type": "string"
@@ -1602,6 +1614,9 @@
 					"lieu_pointage": {
 						"type": "string"
 					},
+					"lieu_travail": {
+						"type": "string"
+					},
 					"cycle_travail_debut": {
 						"type": "string",
 						"format": "date-time"
@@ -1626,7 +1641,7 @@
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
 			"AnalyseCreationParams": {
-				"$ref": "#/components/schemas/Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_"
+				"$ref": "#/components/schemas/Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_"
 			},
 			"AnalyseOutput": {
 				"properties": {
@@ -1677,6 +1692,9 @@
 						"$ref": "#/components/schemas/ModePointage"
 					},
 					"lieu_pointage": {
+						"type": "string"
+					},
+					"lieu_travail": {
 						"type": "string"
 					},
 					"date_analyse": {
@@ -4760,6 +4778,195 @@
 				]
 			}
 		},
+		"/conges/departement/{departementId}": {
+			"get": {
+				"operationId": "GetCongesByDepartement",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/CongeOutput"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Conge"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "departementId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/conges/departement-filtres": {
+			"get": {
+				"operationId": "GetCongesByDepartementFiltres",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/CongeOutput"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Conge"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "departementId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "statut",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "type",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/TypeConge"
+						}
+					},
+					{
+						"in": "query",
+						"name": "dateDebut",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "dateFin",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/conges/departement-stats/{departementId}": {
+			"get": {
+				"operationId": "GetCongesStatsByDepartement",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"repartitionParMois": {},
+										"repartitionParType": {},
+										"totalJours": {
+											"type": "number",
+											"format": "double"
+										},
+										"congesRefuses": {
+											"type": "number",
+											"format": "double"
+										},
+										"congesEnAttente": {
+											"type": "number",
+											"format": "double"
+										},
+										"congesValides": {
+											"type": "number",
+											"format": "double"
+										},
+										"totalConges": {
+											"type": "number",
+											"format": "double"
+										},
+										"departementId": {
+											"type": "number",
+											"format": "double"
+										}
+									},
+									"required": [
+										"repartitionParMois",
+										"repartitionParType",
+										"totalJours",
+										"congesRefuses",
+										"congesEnAttente",
+										"congesValides",
+										"totalConges",
+										"departementId"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Conge"
+				],
+				"security": [
+					{
+						"jwt": [
+							"admin",
+							"RH",
+							"superviseur"
+						]
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "departementId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "annee",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
 		"/conges/en-cours": {
 			"get": {
 				"operationId": "GetCongesEnCours",
@@ -5377,9 +5584,9 @@
 				]
 			}
 		},
-		"/analyses/statut/{statut}": {
+		"/analyses/lieu-travail/{lieuTravail}": {
 			"get": {
-				"operationId": "GetAnalysesByStatut",
+				"operationId": "GetAnalysesByLieuTravail",
 				"responses": {
 					"200": {
 						"description": "Ok",
@@ -5402,10 +5609,10 @@
 				"parameters": [
 					{
 						"in": "path",
-						"name": "statut",
+						"name": "lieuTravail",
 						"required": true,
 						"schema": {
-							"$ref": "#/components/schemas/StatutAnalyse"
+							"type": "string"
 						}
 					},
 					{
@@ -5523,48 +5730,6 @@
 				]
 			}
 		},
-		"/analyses/absents/{date}": {
-			"get": {
-				"operationId": "GetAbsentsDuJour",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/AnalyseOutput"
-									},
-									"type": "array"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Analyse"
-				],
-				"security": [
-					{
-						"jwt": [
-							"admin",
-							"RH",
-							"superviseur"
-						]
-					}
-				],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "date",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
 		"/analyses/sorties-anticipees/{date}": {
 			"get": {
 				"operationId": "GetSortiesAnticipeesDuJour",
@@ -5640,6 +5805,155 @@
 					{
 						"in": "path",
 						"name": "date",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/analyses/analyse-periode/{dateDebut}/{dateFin}": {
+			"get": {
+				"operationId": "GetAnalysesPeriode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"statistiques": {},
+										"pagination": {},
+										"analyses": {
+											"items": {
+												"$ref": "#/components/schemas/AnalyseOutput"
+											},
+											"type": "array"
+										},
+										"periode": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"statistiques",
+										"analyses",
+										"periode"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Analyse"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "dateDebut",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "dateFin",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "includeRelations",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
+		"/analyses/employe/{matricule}/periode": {
+			"get": {
+				"operationId": "GetAnalyseEmployePeriode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"statistiques_employe": {},
+										"analyses": {
+											"items": {
+												"$ref": "#/components/schemas/AnalyseOutput"
+											},
+											"type": "array"
+										},
+										"periode": {
+											"type": "string"
+										},
+										"employe": {}
+									},
+									"required": [
+										"statistiques_employe",
+										"analyses",
+										"periode",
+										"employe"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Analyse"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "matricule",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "dateDebut",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "dateFin",
 						"required": true,
 						"schema": {
 							"type": "string"
@@ -5773,259 +6087,6 @@
 						}
 					}
 				}
-			}
-		},
-		"/analyses/dashboard-aujourdhui": {
-			"get": {
-				"operationId": "GetDashboardAujourdhui",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"alertes": {
-											"items": {
-												"type": "string"
-											},
-											"type": "array"
-										},
-										"absents": {
-											"items": {
-												"$ref": "#/components/schemas/AnalyseOutput"
-											},
-											"type": "array"
-										},
-										"retards": {
-											"items": {
-												"$ref": "#/components/schemas/AnalyseOutput"
-											},
-											"type": "array"
-										},
-										"statistiques": {},
-										"analyses_disponibles": {
-											"type": "boolean"
-										},
-										"heure_actuelle": {
-											"type": "string"
-										},
-										"date": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"analyses_disponibles",
-										"heure_actuelle",
-										"date"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Analyse"
-				],
-				"security": [],
-				"parameters": []
-			}
-		},
-		"/analyses/dashboard-temps-reel": {
-			"get": {
-				"operationId": "GetDashboardTempsReel",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"alertes_non_justifiees": {
-											"type": "number",
-											"format": "double"
-										},
-										"statistiques": {},
-										"absents_actuels": {
-											"items": {
-												"$ref": "#/components/schemas/AnalyseOutput"
-											},
-											"type": "array"
-										},
-										"retards_actuels": {
-											"items": {
-												"$ref": "#/components/schemas/AnalyseOutput"
-											},
-											"type": "array"
-										},
-										"analyses_jour": {
-											"items": {
-												"$ref": "#/components/schemas/AnalyseOutput"
-											},
-											"type": "array"
-										},
-										"heure_actuelle": {
-											"type": "string"
-										},
-										"date": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"alertes_non_justifiees",
-										"statistiques",
-										"absents_actuels",
-										"retards_actuels",
-										"analyses_jour",
-										"heure_actuelle",
-										"date"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Analyse"
-				],
-				"security": [],
-				"parameters": []
-			}
-		},
-		"/analyses/rapport-periode": {
-			"get": {
-				"operationId": "GetRapportPeriode",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"top_absents": {
-											"items": {},
-											"type": "array"
-										},
-										"top_retardataires": {
-											"items": {},
-											"type": "array"
-										},
-										"statistiques_globales": {},
-										"analyses": {
-											"items": {
-												"$ref": "#/components/schemas/AnalyseOutput"
-											},
-											"type": "array"
-										},
-										"periode": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"top_absents",
-										"top_retardataires",
-										"statistiques_globales",
-										"analyses",
-										"periode"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Analyse"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "query",
-						"name": "dateDebut",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "query",
-						"name": "dateFin",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				]
-			}
-		},
-		"/analyses/rapport-mensuel/{annee}/{mois}": {
-			"get": {
-				"operationId": "GetRapportMensuel",
-				"responses": {
-					"200": {
-						"description": "Ok",
-						"content": {
-							"application/json": {
-								"schema": {
-									"properties": {
-										"absents_du_mois": {
-											"items": {},
-											"type": "array"
-										},
-										"retardataires_du_mois": {
-											"items": {},
-											"type": "array"
-										},
-										"analyses": {
-											"items": {
-												"$ref": "#/components/schemas/AnalyseOutput"
-											},
-											"type": "array"
-										},
-										"statistiques_globales": {},
-										"mois": {
-											"type": "string"
-										}
-									},
-									"required": [
-										"absents_du_mois",
-										"retardataires_du_mois",
-										"analyses",
-										"statistiques_globales",
-										"mois"
-									],
-									"type": "object"
-								}
-							}
-						}
-					}
-				},
-				"tags": [
-					"Analyse"
-				],
-				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "annee",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					},
-					{
-						"in": "path",
-						"name": "mois",
-						"required": true,
-						"schema": {
-							"format": "double",
-							"type": "number"
-						}
-					}
-				]
 			}
 		},
 		"/analyses/recalculer-periode": {

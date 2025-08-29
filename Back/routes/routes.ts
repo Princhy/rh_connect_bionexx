@@ -444,6 +444,7 @@ const models: TsoaRoute.Models = {
             "date_reprise": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"string"}],"required":true},
             "personne_interim": {"dataType":"string"},
             "statut": {"ref":"StatutConge"},
+            "departement_id": {"dataType":"double"},
             "user": {"dataType":"nestedObjectLiteral","nestedProperties":{"email":{"dataType":"string","required":true},"prenom":{"dataType":"string","required":true},"nom":{"dataType":"string","required":true}}},
             "userInterim": {"dataType":"nestedObjectLiteral","nestedProperties":{"matricule":{"dataType":"string","required":true},"prenom":{"dataType":"string","required":true},"nom":{"dataType":"string","required":true}}},
         },
@@ -472,6 +473,7 @@ const models: TsoaRoute.Models = {
             "date_reprise": {"dataType":"union","subSchemas":[{"dataType":"datetime"},{"dataType":"string"}],"required":true},
             "personne_interim": {"dataType":"string"},
             "statut": {"ref":"StatutConge"},
+            "departement_id": {"dataType":"double"},
         },
         "additionalProperties": false,
     },
@@ -488,6 +490,7 @@ const models: TsoaRoute.Models = {
             "date_reprise": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"datetime"}]},
             "personne_interim": {"dataType":"string"},
             "statut": {"ref":"StatutConge"},
+            "departement_id": {"dataType":"double"},
         },
         "additionalProperties": false,
     },
@@ -542,14 +545,14 @@ const models: TsoaRoute.Models = {
         "enums": ["present","retard","absent","sortie_anticipee","present_avec_retard","en_conge","EN_REPOS"],
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_": {
+    "Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"matricule":{"dataType":"string","required":true},"date":{"dataType":"datetime","required":true},"heure_prevue_arrivee":{"dataType":"string"},"heure_prevue_depart":{"dataType":"string"},"heure_reelle_arrivee":{"dataType":"string"},"heure_reelle_depart":{"dataType":"string"},"retard_minutes":{"dataType":"double","required":true},"sortie_anticipee_minutes":{"dataType":"double","required":true},"statut_final":{"ref":"StatutAnalyse","required":true},"travaille_aujourd_hui":{"dataType":"boolean","required":true},"commentaire":{"dataType":"string"},"mode_pointage":{"ref":"ModePointage"},"lieu_pointage":{"dataType":"string"},"cycle_travail_debut":{"dataType":"datetime"},"cycle_travail_fin":{"dataType":"datetime"},"est_equipe_nuit":{"dataType":"boolean"}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"matricule":{"dataType":"string","required":true},"date":{"dataType":"datetime","required":true},"heure_prevue_arrivee":{"dataType":"string"},"heure_prevue_depart":{"dataType":"string"},"heure_reelle_arrivee":{"dataType":"string"},"heure_reelle_depart":{"dataType":"string"},"retard_minutes":{"dataType":"double","required":true},"sortie_anticipee_minutes":{"dataType":"double","required":true},"statut_final":{"ref":"StatutAnalyse","required":true},"travaille_aujourd_hui":{"dataType":"boolean","required":true},"commentaire":{"dataType":"string"},"mode_pointage":{"ref":"ModePointage"},"lieu_pointage":{"dataType":"string"},"lieu_travail":{"dataType":"string"},"cycle_travail_debut":{"dataType":"datetime"},"cycle_travail_fin":{"dataType":"datetime"},"est_equipe_nuit":{"dataType":"boolean"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AnalyseCreationParams": {
         "dataType": "refAlias",
-        "type": {"ref":"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_","validators":{}},
+        "type": {"ref":"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AnalyseOutput": {
@@ -570,6 +573,7 @@ const models: TsoaRoute.Models = {
             "commentaire": {"dataType":"string"},
             "mode_pointage": {"ref":"ModePointage"},
             "lieu_pointage": {"dataType":"string"},
+            "lieu_travail": {"dataType":"string"},
             "date_analyse": {"dataType":"datetime","required":true},
             "cycle_travail_debut": {"dataType":"datetime"},
             "cycle_travail_fin": {"dataType":"datetime"},
@@ -2858,6 +2862,102 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCongeController_getCongesByDepartement: Record<string, TsoaRoute.ParameterSchema> = {
+                departementId: {"in":"path","name":"departementId","required":true,"dataType":"double"},
+        };
+        app.get('/conges/departement/:departementId',
+            ...(fetchMiddlewares<RequestHandler>(CongeController)),
+            ...(fetchMiddlewares<RequestHandler>(CongeController.prototype.getCongesByDepartement)),
+
+            async function CongeController_getCongesByDepartement(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCongeController_getCongesByDepartement, request, response });
+
+                const controller = new CongeController();
+
+              await templateService.apiHandler({
+                methodName: 'getCongesByDepartement',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCongeController_getCongesByDepartementFiltres: Record<string, TsoaRoute.ParameterSchema> = {
+                departementId: {"in":"query","name":"departementId","required":true,"dataType":"double"},
+                statut: {"in":"query","name":"statut","dataType":"string"},
+                type: {"in":"query","name":"type","ref":"TypeConge"},
+                dateDebut: {"in":"query","name":"dateDebut","dataType":"string"},
+                dateFin: {"in":"query","name":"dateFin","dataType":"string"},
+        };
+        app.get('/conges/departement-filtres',
+            ...(fetchMiddlewares<RequestHandler>(CongeController)),
+            ...(fetchMiddlewares<RequestHandler>(CongeController.prototype.getCongesByDepartementFiltres)),
+
+            async function CongeController_getCongesByDepartementFiltres(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCongeController_getCongesByDepartementFiltres, request, response });
+
+                const controller = new CongeController();
+
+              await templateService.apiHandler({
+                methodName: 'getCongesByDepartementFiltres',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCongeController_getCongesStatsByDepartement: Record<string, TsoaRoute.ParameterSchema> = {
+                departementId: {"in":"path","name":"departementId","required":true,"dataType":"double"},
+                annee: {"in":"query","name":"annee","dataType":"double"},
+        };
+        app.get('/conges/departement-stats/:departementId',
+            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
+            ...(fetchMiddlewares<RequestHandler>(CongeController)),
+            ...(fetchMiddlewares<RequestHandler>(CongeController.prototype.getCongesStatsByDepartement)),
+
+            async function CongeController_getCongesStatsByDepartement(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCongeController_getCongesStatsByDepartement, request, response });
+
+                const controller = new CongeController();
+
+              await templateService.apiHandler({
+                methodName: 'getCongesStatsByDepartement',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsCongeController_getCongesEnCours: Record<string, TsoaRoute.ParameterSchema> = {
         };
         app.get('/conges/en-cours',
@@ -3318,26 +3418,26 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsAnalyseController_getAnalysesByStatut: Record<string, TsoaRoute.ParameterSchema> = {
-                statut: {"in":"path","name":"statut","required":true,"ref":"StatutAnalyse"},
+        const argsAnalyseController_getAnalysesByLieuTravail: Record<string, TsoaRoute.ParameterSchema> = {
+                lieuTravail: {"in":"path","name":"lieuTravail","required":true,"dataType":"string"},
                 date: {"in":"query","name":"date","dataType":"string"},
         };
-        app.get('/analyses/statut/:statut',
+        app.get('/analyses/lieu-travail/:lieuTravail',
             ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalysesByStatut)),
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalysesByLieuTravail)),
 
-            async function AnalyseController_getAnalysesByStatut(request: ExRequest, response: ExResponse, next: any) {
+            async function AnalyseController_getAnalysesByLieuTravail(request: ExRequest, response: ExResponse, next: any) {
 
             // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
             let validatedArgs: any[] = [];
             try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getAnalysesByStatut, request, response });
+                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getAnalysesByLieuTravail, request, response });
 
                 const controller = new AnalyseController();
 
               await templateService.apiHandler({
-                methodName: 'getAnalysesByStatut',
+                methodName: 'getAnalysesByLieuTravail',
                 controller,
                 response,
                 next,
@@ -3439,37 +3539,6 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsAnalyseController_getAbsentsDuJour: Record<string, TsoaRoute.ParameterSchema> = {
-                date: {"in":"path","name":"date","required":true,"dataType":"string"},
-        };
-        app.get('/analyses/absents/:date',
-            authenticateMiddleware([{"jwt":["admin","RH","superviseur"]}]),
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAbsentsDuJour)),
-
-            async function AnalyseController_getAbsentsDuJour(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getAbsentsDuJour, request, response });
-
-                const controller = new AnalyseController();
-
-              await templateService.apiHandler({
-                methodName: 'getAbsentsDuJour',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsAnalyseController_getSortiesAnticipeesDuJour: Record<string, TsoaRoute.ParameterSchema> = {
                 date: {"in":"path","name":"date","required":true,"dataType":"string"},
         };
@@ -3520,6 +3589,72 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getStatistiquesJour',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAnalyseController_getAnalysesPeriode: Record<string, TsoaRoute.ParameterSchema> = {
+                dateDebut: {"in":"path","name":"dateDebut","required":true,"dataType":"string"},
+                dateFin: {"in":"path","name":"dateFin","required":true,"dataType":"string"},
+                page: {"in":"query","name":"page","dataType":"double"},
+                limit: {"in":"query","name":"limit","dataType":"double"},
+                includeRelations: {"in":"query","name":"includeRelations","dataType":"boolean"},
+        };
+        app.get('/analyses/analyse-periode/:dateDebut/:dateFin',
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalysesPeriode)),
+
+            async function AnalyseController_getAnalysesPeriode(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getAnalysesPeriode, request, response });
+
+                const controller = new AnalyseController();
+
+              await templateService.apiHandler({
+                methodName: 'getAnalysesPeriode',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAnalyseController_getAnalyseEmployePeriode: Record<string, TsoaRoute.ParameterSchema> = {
+                matricule: {"in":"path","name":"matricule","required":true,"dataType":"string"},
+                dateDebut: {"in":"query","name":"dateDebut","required":true,"dataType":"string"},
+                dateFin: {"in":"query","name":"dateFin","required":true,"dataType":"string"},
+        };
+        app.get('/analyses/employe/:matricule/periode',
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalyseEmployePeriode)),
+
+            async function AnalyseController_getAnalyseEmployePeriode(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getAnalyseEmployePeriode, request, response });
+
+                const controller = new AnalyseController();
+
+              await templateService.apiHandler({
+                methodName: 'getAnalyseEmployePeriode',
                 controller,
                 response,
                 next,
@@ -3585,126 +3720,6 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'justifierParMatriculeDate',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsAnalyseController_getDashboardAujourdhui: Record<string, TsoaRoute.ParameterSchema> = {
-        };
-        app.get('/analyses/dashboard-aujourdhui',
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getDashboardAujourdhui)),
-
-            async function AnalyseController_getDashboardAujourdhui(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getDashboardAujourdhui, request, response });
-
-                const controller = new AnalyseController();
-
-              await templateService.apiHandler({
-                methodName: 'getDashboardAujourdhui',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsAnalyseController_getDashboardTempsReel: Record<string, TsoaRoute.ParameterSchema> = {
-        };
-        app.get('/analyses/dashboard-temps-reel',
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getDashboardTempsReel)),
-
-            async function AnalyseController_getDashboardTempsReel(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getDashboardTempsReel, request, response });
-
-                const controller = new AnalyseController();
-
-              await templateService.apiHandler({
-                methodName: 'getDashboardTempsReel',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsAnalyseController_getRapportPeriode: Record<string, TsoaRoute.ParameterSchema> = {
-                dateDebut: {"in":"query","name":"dateDebut","required":true,"dataType":"string"},
-                dateFin: {"in":"query","name":"dateFin","required":true,"dataType":"string"},
-        };
-        app.get('/analyses/rapport-periode',
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getRapportPeriode)),
-
-            async function AnalyseController_getRapportPeriode(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getRapportPeriode, request, response });
-
-                const controller = new AnalyseController();
-
-              await templateService.apiHandler({
-                methodName: 'getRapportPeriode',
-                controller,
-                response,
-                next,
-                validatedArgs,
-                successStatus: undefined,
-              });
-            } catch (err) {
-                return next(err);
-            }
-        });
-        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        const argsAnalyseController_getRapportMensuel: Record<string, TsoaRoute.ParameterSchema> = {
-                annee: {"in":"path","name":"annee","required":true,"dataType":"double"},
-                mois: {"in":"path","name":"mois","required":true,"dataType":"double"},
-        };
-        app.get('/analyses/rapport-mensuel/:annee/:mois',
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
-            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getRapportMensuel)),
-
-            async function AnalyseController_getRapportMensuel(request: ExRequest, response: ExResponse, next: any) {
-
-            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-
-            let validatedArgs: any[] = [];
-            try {
-                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getRapportMensuel, request, response });
-
-                const controller = new AnalyseController();
-
-              await templateService.apiHandler({
-                methodName: 'getRapportMensuel',
                 controller,
                 response,
                 next,

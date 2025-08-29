@@ -11,6 +11,7 @@ export interface IConge {
     date_reprise: Date | string;
     personne_interim?: string;
     statut?: StatutConge;
+    departement_id?: number;
 }
 
 export interface CongeOutput {
@@ -24,6 +25,7 @@ export interface CongeOutput {
     date_reprise: Date | string;
     personne_interim?: string;
     statut?: StatutConge;
+    departement_id?: number;
     user?: {
         nom: string;
         prenom: string;
@@ -46,6 +48,7 @@ export interface CongeCreateParams {
     date_reprise: Date | string;
     personne_interim?: string;
     statut?: StatutConge;
+    departement_id?: number;
 }
 
 export interface CongeUpdateParams extends Partial<CongeCreateParams> {}

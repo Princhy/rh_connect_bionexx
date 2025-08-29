@@ -4,7 +4,7 @@
       "lib": ["es2021", "dom"],
       "module": "commonjs",
       "outDir": "build",
-      "rootDir": "./src",
+      "rootDir": "./",
       "strict": false,
       "moduleResolution": "node",
       "esModuleInterop": true,
@@ -14,7 +14,7 @@
       "forceConsistentCasingInFileNames": true,
       "resolveJsonModule": true
     },
-    "include": ["src/**/*", "src/generateApi.ts"],
+    "include": ["src/**/*", "src/generateApi.ts", "routes/**/*"],
     "exclude":[
         "./node_modules"
       ]

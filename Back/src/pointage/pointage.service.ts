@@ -106,4 +106,19 @@ export class PointageService {
     relations: ['pointeuse', 'user', 'user.lieu', 'user.equipe', 'user.departement','pointeuse.lieu']
   });
 }
+
+  public async getPointagesByMatriculeAndDateRange(
+    matricule: string, 
+    startDate: Date, 
+    endDate: Date
+  ): Promise<PointageOutput[]> {
+    return await pointageRepository().find({
+      where: { 
+        matricule,
+        date: Between(startDate, endDate)
+      },
+      relations: ['pointeuse', 'user', 'user.lieu', 'user.equipe', 'user.departement','pointeuse.lieu'],
+      order: { date: 'ASC' }
+    });
+  }
 }

@@ -77,6 +77,10 @@ type Conge = {
     poste: string;
     role: string;
     id_departement: number;
+    departement?: {
+      id_departement: number;
+      departement: string;
+    };
   };
 };
 
@@ -259,6 +263,11 @@ const Conges = () => {
       if (hasRole('Employe') && user?.matricule) {
         url = `/conges/matricule/${user.matricule}`;
       }
+      // Les superviseurs voient les congés de leur département
+      else if (hasRole('Superviseur') && user?.id_departement) {
+        url = `/conges/departement/${user.id_departement}`;
+      }
+      // Admin et RH voient tous les congés (url par défaut)
       
       const response = await axiosInstance.get(url);
       setData(response.data);
@@ -280,6 +289,11 @@ const Conges = () => {
         setEmployeeOptions([user.matricule]);
         return;
       }
+      // Les superviseurs ne voient que les employés de leur département
+      else if (hasRole('Superviseur') && user?.id_departement) {
+        url = `/users/departement/${user.id_departement}`;
+      }
+      // Admin et RH voient tous les employés (url par défaut)
       
       const response = await axiosInstance.get(url);
       const matricules = response.data.map((user: any) => user.matricule);
@@ -655,6 +669,23 @@ const Conges = () => {
             Actualiser
           </Button>
         </Box>
+
+        {/* Indicateur de contexte de filtrage */}
+        {data.length > 0 && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            <Typography>
+              {hasRole('Employe') && (
+                <>👤 Affichage de vos congés personnels ({data.length} congé{data.length > 1 ? 's' : ''})</>
+              )}
+              {hasRole('Superviseur') && (
+                <>🏢 Affichage des congés de votre département ({data.length} congé{data.length > 1 ? 's' : ''})</>
+              )}
+              {(hasRole('Admin') || hasRole('RH')) && (
+                <>🏢 Affichage de tous les congés ({data.length} congé{data.length > 1 ? 's' : ''})</>
+              )}
+            </Typography>
+          </Alert>
+        )}
       </Container>
 
       {isLoading ? (

@@ -55,6 +55,9 @@ export class Conge {
     })
     statut: StatutConge;
 
+    @Column({ type: "int", nullable: true })
+    departement_id: number;
+
     // Relations
     @ManyToOne(() => User)
     @JoinColumn({ name: "matricule", referencedColumnName: "matricule" })
