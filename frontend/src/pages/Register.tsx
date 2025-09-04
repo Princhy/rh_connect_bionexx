@@ -65,7 +65,7 @@ export default function CreateEmployeePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    console.log('Données soumises:', formData); // Pour debug
+
     try {
       await axiosInstance.post('/users', formData);
       toast.success('Employé créé avec succès');

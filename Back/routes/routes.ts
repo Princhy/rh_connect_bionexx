@@ -545,14 +545,14 @@ const models: TsoaRoute.Models = {
         "enums": ["present","retard","absent","sortie_anticipee","present_avec_retard","en_conge","EN_REPOS"],
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_": {
+    "Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit-or-h_travail_": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"matricule":{"dataType":"string","required":true},"date":{"dataType":"datetime","required":true},"heure_prevue_arrivee":{"dataType":"string"},"heure_prevue_depart":{"dataType":"string"},"heure_reelle_arrivee":{"dataType":"string"},"heure_reelle_depart":{"dataType":"string"},"retard_minutes":{"dataType":"double","required":true},"sortie_anticipee_minutes":{"dataType":"double","required":true},"statut_final":{"ref":"StatutAnalyse","required":true},"travaille_aujourd_hui":{"dataType":"boolean","required":true},"commentaire":{"dataType":"string"},"mode_pointage":{"ref":"ModePointage"},"lieu_pointage":{"dataType":"string"},"lieu_travail":{"dataType":"string"},"cycle_travail_debut":{"dataType":"datetime"},"cycle_travail_fin":{"dataType":"datetime"},"est_equipe_nuit":{"dataType":"boolean"}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"matricule":{"dataType":"string","required":true},"date":{"dataType":"datetime","required":true},"heure_prevue_arrivee":{"dataType":"string"},"heure_prevue_depart":{"dataType":"string"},"heure_reelle_arrivee":{"dataType":"string"},"heure_reelle_depart":{"dataType":"string"},"retard_minutes":{"dataType":"double","required":true},"sortie_anticipee_minutes":{"dataType":"double","required":true},"statut_final":{"ref":"StatutAnalyse","required":true},"travaille_aujourd_hui":{"dataType":"boolean","required":true},"commentaire":{"dataType":"string"},"mode_pointage":{"ref":"ModePointage"},"lieu_pointage":{"dataType":"string"},"lieu_travail":{"dataType":"string"},"cycle_travail_debut":{"dataType":"datetime"},"cycle_travail_fin":{"dataType":"datetime"},"est_equipe_nuit":{"dataType":"boolean"},"h_travail":{"dataType":"string"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AnalyseCreationParams": {
         "dataType": "refAlias",
-        "type": {"ref":"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_","validators":{}},
+        "type": {"ref":"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit-or-h_travail_","validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "AnalyseOutput": {
@@ -578,6 +578,7 @@ const models: TsoaRoute.Models = {
             "cycle_travail_debut": {"dataType":"datetime"},
             "cycle_travail_fin": {"dataType":"datetime"},
             "est_equipe_nuit": {"dataType":"boolean"},
+            "h_travail": {"dataType":"string"},
             "user": {"dataType":"nestedObjectLiteral","nestedProperties":{"lieu":{"dataType":"nestedObjectLiteral","nestedProperties":{"lieu":{"dataType":"string","required":true},"id_lieu":{"dataType":"double","required":true}}},"departement":{"dataType":"nestedObjectLiteral","nestedProperties":{"departement":{"dataType":"string","required":true},"id_departement":{"dataType":"double","required":true}}},"equipe":{"dataType":"nestedObjectLiteral","nestedProperties":{"equipe":{"dataType":"string","required":true},"id_equipe":{"dataType":"double","required":true}}},"poste":{"dataType":"string","required":true},"prenom":{"dataType":"string","required":true},"nom":{"dataType":"string","required":true},"matricule":{"dataType":"string","required":true},"id_user":{"dataType":"double","required":true}}},
         },
         "additionalProperties": false,
@@ -3811,6 +3812,98 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'getEmployesEnRepos',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAnalyseController_getAnalysesParHeuresTravail: Record<string, TsoaRoute.ParameterSchema> = {
+                date: {"in":"path","name":"date","required":true,"dataType":"string"},
+                filtre: {"default":"normal","in":"query","name":"filtre","dataType":"union","subSchemas":[{"dataType":"enum","enums":["normal"]},{"dataType":"enum","enums":["pas_sortie"]},{"dataType":"enum","enums":["anomalie"]},{"dataType":"enum","enums":["court"]},{"dataType":"enum","enums":["long"]}]},
+        };
+        app.get('/analyses/heures-travail/:date',
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getAnalysesParHeuresTravail)),
+
+            async function AnalyseController_getAnalysesParHeuresTravail(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getAnalysesParHeuresTravail, request, response });
+
+                const controller = new AnalyseController();
+
+              await templateService.apiHandler({
+                methodName: 'getAnalysesParHeuresTravail',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAnalyseController_getStatistiquesHeuresTravail: Record<string, TsoaRoute.ParameterSchema> = {
+                date: {"in":"path","name":"date","required":true,"dataType":"string"},
+        };
+        app.get('/analyses/statistiques-heures-travail/:date',
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getStatistiquesHeuresTravail)),
+
+            async function AnalyseController_getStatistiquesHeuresTravail(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getStatistiquesHeuresTravail, request, response });
+
+                const controller = new AnalyseController();
+
+              await templateService.apiHandler({
+                methodName: 'getStatistiquesHeuresTravail',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsAnalyseController_getStatistiquesHeuresTravailPeriode: Record<string, TsoaRoute.ParameterSchema> = {
+                dateDebut: {"in":"path","name":"dateDebut","required":true,"dataType":"string"},
+                dateFin: {"in":"path","name":"dateFin","required":true,"dataType":"string"},
+        };
+        app.get('/analyses/heures-travail-periode/:dateDebut/:dateFin',
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController)),
+            ...(fetchMiddlewares<RequestHandler>(AnalyseController.prototype.getStatistiquesHeuresTravailPeriode)),
+
+            async function AnalyseController_getStatistiquesHeuresTravailPeriode(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsAnalyseController_getStatistiquesHeuresTravailPeriode, request, response });
+
+                const controller = new AnalyseController();
+
+              await templateService.apiHandler({
+                methodName: 'getStatistiquesHeuresTravailPeriode',
                 controller,
                 response,
                 next,

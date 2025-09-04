@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Container,
   Typography,
   Box,
   Card,
@@ -12,13 +11,7 @@ import {
   Chip,
   Avatar,
   Paper,
-  Divider,
   Tooltip,
-  IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Autocomplete,
   Skeleton,
 } from '@mui/material';
@@ -26,7 +19,6 @@ import {
   MaterialReactTable,
   useMaterialReactTable,
   type MRT_ColumnDef,
-  type MRT_Row,
 } from 'material-react-table';
 import { useTheme, alpha } from '@mui/material/styles';
 import {
@@ -34,7 +26,6 @@ import {
   Business as BusinessIcon,
   Schedule as ScheduleIcon,
   TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
   CheckCircle as CheckCircleIcon,
   Cancel as CancelIcon,
   AccessTime as AccessTimeIcon,
@@ -94,6 +85,7 @@ interface Analyse {
   mode_pointage: string | null;
   lieu_pointage: string | null;
   lieu_travail: string | null;
+  h_travail: string | null;
   date_analyse: string;
   user: User;
 }
@@ -110,6 +102,7 @@ interface Statistics {
   jours_repos: number;
   total_retard_minutes: number;
   total_sortie_anticipee_minutes: number;
+  total_heures_travail: string;
   retard_moyen_minutes: number;
   taux_presence: number;
   taux_absence: number;
@@ -213,9 +206,7 @@ const EmployeeAnalysis: React.FC = () => {
       });
       
       const url = `/analyses/employe/${selectedMatricule}/periode?${params.toString()}`;
-      console.log('URL de requête:', url); // Debug log
-      console.log('Paramètres de date:', { dateDebut, dateFin }); // Debug log
-      console.log('Paramètres encodés:', params.toString()); // Debug log
+      
       
       const response = await axiosInstance.get(url);
       setData(response.data);
@@ -273,42 +264,7 @@ const EmployeeAnalysis: React.FC = () => {
     }
   };
 
-  // Charts data
-  const presenceData = useMemo(() => {
-    if (!data) return [];
-    const stats = data.statistiques_employe;
-    return [
-      { name: 'Présent', value: stats.jours_presents, color: '#4caf50' },
-      { name: 'Retard', value: stats.jours_retards, color: '#ff9800' },
-      { name: 'Absent', value: stats.jours_absents, color: '#f44336' },
-      { name: 'En repos', value: stats.jours_repos, color: '#2196f3' },
-    ];
-  }, [data]);
 
-  const weeklyData = useMemo(() => {
-    if (!data) return [];
-    
-    const weeklyStats: { [week: string]: { presents: number; absents: number; retards: number } } = {};
-    
-    data.analyses.forEach(analyse => {
-      const date = new Date(analyse.date);
-      const weekStart = new Date(date.setDate(date.getDate() - date.getDay()));
-      const weekKey = `Sem ${Math.ceil(weekStart.getDate() / 7)}`;
-      
-      if (!weeklyStats[weekKey]) {
-        weeklyStats[weekKey] = { presents: 0, absents: 0, retards: 0 };
-      }
-      
-      if (analyse.statut_final === 'present') weeklyStats[weekKey].presents++;
-      else if (analyse.statut_final === 'absent') weeklyStats[weekKey].absents++;
-      else if (analyse.statut_final === 'retard') weeklyStats[weekKey].retards++;
-    });
-    
-    return Object.entries(weeklyStats).map(([week, stats]) => ({
-      week,
-      ...stats
-    }));
-  }, [data]);
 
   // Table columns
   const columns = useMemo<MRT_ColumnDef<Analyse>[]>(
@@ -323,7 +279,7 @@ const EmployeeAnalysis: React.FC = () => {
         accessorKey: 'statut_final',
         header: 'Statut',
         size: 120,
-        Cell: ({ cell, row }) => {
+        Cell: ({ cell }) => {
           const statut = cell.getValue<string>();
           return (
             <Chip
@@ -381,6 +337,156 @@ const EmployeeAnalysis: React.FC = () => {
         size: 100,
         Cell: ({ cell }) => cell.getValue<string>() || 'N/A',
       },
+      {
+        accessorKey: 'h_travail',
+        header: 'Heures Travail',
+        size: 130,
+        Cell: ({ cell }) => {
+          const hTravail = cell.getValue<string>();
+          if (!hTravail) {
+            return (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                p: 1,
+                borderRadius: 2,
+                bgcolor: 'grey.100',
+                border: '1px dashed grey.300'
+              }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  Non défini
+                </Typography>
+              </Box>
+            );
+          }
+          
+          // Styles différents selon le type de valeur
+          if (hTravail === "pas_sortie") {
+            return (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                p: 1.5,
+                borderRadius: 3,
+                bgcolor: 'orange.50',
+                border: '2px solid orange.200',
+                boxShadow: '0 2px 8px rgba(255, 152, 0, 0.2)',
+                position: 'relative',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: -2,
+                  left: -2,
+                  right: -2,
+                  bottom: -2,
+                  borderRadius: 3,
+                  background: 'linear-gradient(45deg, #ff9800, #ff5722)',
+                  zIndex: -1,
+                  opacity: 0.3
+                }
+              }}>
+                <WarningIcon sx={{ color: 'orange.600', fontSize: 18 }} />
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontWeight: 'bold',
+                    color: 'orange.800',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {hTravail}
+                </Typography>
+              </Box>
+            );
+          } 
+          
+          if (hTravail === "anomalie") {
+            return (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                p: 1.5,
+                borderRadius: 3,
+                bgcolor: 'red.50',
+                border: '2px solid red.200',
+                boxShadow: '0 2px 8px rgba(244, 67, 54, 0.2)',
+                position: 'relative',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: -2,
+                  left: -2,
+                  right: -2,
+                  bottom: -2,
+                  borderRadius: 3,
+                  background: 'linear-gradient(45deg, #f44336, #d32f2f)',
+                  zIndex: -1,
+                  opacity: 0.3
+                }
+              }}>
+                <CancelIcon sx={{ color: 'red.600', fontSize: 18 }} />
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontWeight: 'bold',
+                    color: 'red.800',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {hTravail}
+                </Typography>
+              </Box>
+            );
+          }
+          
+          // Pour les heures normales (format "8h30")
+          return (
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1.5,
+              p: 1.5,
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #4caf50, #66bb6a)',
+              color: 'white',
+              boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
+                transform: 'translateX(-100%)',
+                transition: 'transform 0.6s ease-in-out'
+              },
+              '&:hover::before': {
+                transform: 'translateX(100%)'
+              }
+            }}>
+              <AccessTimeIcon sx={{ fontSize: 18, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }} />
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace',
+                  fontSize: '0.875rem',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                {hTravail}
+              </Typography>
+            </Box>
+          );
+        },
+      },
              {
          accessorKey: 'mode_pointage',
          header: 'Mode',
@@ -431,9 +537,29 @@ const EmployeeAnalysis: React.FC = () => {
     enablePagination: true,
     enableSorting: true,
     enableColumnFilters: true,
+    enableGlobalFilter: true,
+    enableDensityToggle: true,
+    enableFullScreenToggle: true,
+    enableRowSelection: true,
     columnFilterDisplayMode: 'popover',
     paginationDisplayMode: 'pages',
-    renderTopToolbarCustomActions: ({ table }) => (
+    initialState: {
+      pagination: { pageSize: 25, pageIndex: 0 },
+      sorting: [{ id: 'date', desc: true }]
+    },
+    muiTableContainerProps: {
+      sx: {
+        maxWidth: '100%',
+        overflowX: 'auto'
+      }
+    },
+    muiTableProps: {
+      sx: {
+        tableLayout: 'fixed',
+        minWidth: { xs: '600px', sm: '700px', md: '800px' }
+      }
+    },
+    renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', gap: '16px', padding: '8px', flexWrap: 'wrap' }}>
         <Button
           disabled={!data || data.analyses.length === 0}
@@ -471,6 +597,7 @@ const EmployeeAnalysis: React.FC = () => {
     doc.text(`Jours absents: ${stats.jours_absents}`, 14, 86);
     doc.text(`Jours en retard: ${stats.jours_retards}`, 14, 94);
     doc.text(`Retard total: ${formatMinutesToHours(stats.total_retard_minutes)}`, 14, 102);
+    doc.text(`Total heures travail: ${stats.total_heures_travail || '0h'}`, 14, 110);
 
          // Table data
      const tableData = data.analyses.map((analyse) => [
@@ -482,13 +609,14 @@ const EmployeeAnalysis: React.FC = () => {
        formatTime(analyse.heure_reelle_depart),
        analyse.retard_minutes > 0 ? formatMinutesToHours(analyse.retard_minutes) : '-',
        analyse.lieu_pointage || 'N/A',
+       analyse.h_travail || 'N/A',
        analyse.mode_pointage || 'N/A',
        analyse.commentaire || '-'
      ]);
 
      const tableHeaders = [
        'Date', 'Statut', 'Arrivée Prévue', 'Arrivée Réelle', 
-       'Départ Prévu', 'Départ Réel', 'Retard', 'Lieu', 'Mode', 'Commentaire'
+       'Départ Prévu', 'Départ Réel', 'Retard', 'Lieu', 'Heures Travail', 'Mode', 'Commentaire'
      ];
 
     autoTable(doc, {
@@ -578,7 +706,28 @@ const EmployeeAnalysis: React.FC = () => {
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
-    <Container maxWidth="xl" className="pt-20">
+    <Box className="pt-20" sx={{ 
+      maxWidth: '100%',
+      width: '100%',
+      px: 2,
+      '@media (min-width: 1200px)': {
+        maxWidth: '1620px',
+        width: '100%',
+        margin: '0 auto',
+        px: 3
+      },
+      '@media (min-width: 1536px)': {
+        maxWidth: '1536px',
+        width: '100%',
+        px: 4
+      },
+      '@media (min-width: 1920px)': {
+        maxWidth: '2000px',
+        width: '100%',
+        margin: '0 auto',
+        px: 6
+      }
+    }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" gutterBottom>
           Analyse Individuelle des Employés
@@ -626,7 +775,7 @@ const EmployeeAnalysis: React.FC = () => {
                 onChange={(e) => {
                   const normalizedDate = normalizeDate(e.target.value);
                   setDateDebut(normalizedDate);
-                  console.log('Date début changée:', normalizedDate); // Debug log
+            
                 }}
                 InputLabelProps={{ shrink: true }}
 
@@ -641,7 +790,7 @@ const EmployeeAnalysis: React.FC = () => {
                 onChange={(e) => {
                   const normalizedDate = normalizeDate(e.target.value);
                   setDateFin(normalizedDate);
-                  console.log('Date fin changée:', normalizedDate); // Debug log
+            
                 }}
                 InputLabelProps={{ shrink: true }}
 
@@ -711,7 +860,7 @@ const EmployeeAnalysis: React.FC = () => {
                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                      <BusinessIcon fontSize="small" />
                      <Typography variant="body2">
-                       Lieu de travail: {data.employe.lieu?.lieu || 'Non défini'}
+                       Rattachement: {data.employe.lieu?.lieu || 'Non défini'}
                      </Typography>
                    </Box>
                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -731,7 +880,12 @@ const EmployeeAnalysis: React.FC = () => {
             </Paper>
 
             {/* Statistics Cards */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 3 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: 3, 
+              mb: 3 
+            }}>
               <StatCard
                 title="Taux de Présence"
                 value={`${data.statistiques_employe.taux_presence.toFixed(1)}%`}
@@ -753,6 +907,13 @@ const EmployeeAnalysis: React.FC = () => {
                 color={theme.palette.warning.main}
                 subtitle={formatMinutesToHours(data.statistiques_employe.total_retard_minutes)}
               />
+              <StatCard
+                title="Total Heures Travail"
+                value={data.statistiques_employe.total_heures_travail || '0h'}
+                icon={<ScheduleIcon />}
+                color={theme.palette.primary.main}
+                subtitle="Cumul des heures travaillées"
+              />
                               <StatCard
                   title="Jours en Repos"
                   value={data.statistiques_employe.jours_repos}
@@ -770,7 +931,12 @@ const EmployeeAnalysis: React.FC = () => {
             </Box>
 
             {/* Charts - Temporarily disabled due to Recharts compatibility issues */}
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 3 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: 3, 
+              mb: 3 
+            }}>
               <Card sx={{ minWidth: 400, flex: 1 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
@@ -798,7 +964,9 @@ const EmployeeAnalysis: React.FC = () => {
               <Typography variant="h6" sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
                 Détail des Analyses - Période: {data.periode}
               </Typography>
-              <MaterialReactTable table={table} />
+              <Box sx={{ overflowX: 'auto' }}>
+                <MaterialReactTable table={table} />
+              </Box>
             </Paper>
           </>
         ) : !isLoading && (
@@ -812,7 +980,7 @@ const EmployeeAnalysis: React.FC = () => {
           </Paper>
         )}
       </Box>
-    </Container>
+    </Box>
   );
 };
 

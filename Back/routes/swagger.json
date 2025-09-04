@@ -1570,7 +1570,7 @@
 				],
 				"type": "string"
 			},
-			"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_": {
+			"Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit-or-h_travail_": {
 				"properties": {
 					"matricule": {
 						"type": "string"
@@ -1627,6 +1627,9 @@
 					},
 					"est_equipe_nuit": {
 						"type": "boolean"
+					},
+					"h_travail": {
+						"type": "string"
 					}
 				},
 				"required": [
@@ -1641,7 +1644,7 @@
 				"description": "From T, pick a set of properties whose keys are in the union K"
 			},
 			"AnalyseCreationParams": {
-				"$ref": "#/components/schemas/Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit_"
+				"$ref": "#/components/schemas/Pick_IAnalyse.matricule-or-date-or-heure_prevue_arrivee-or-heure_prevue_depart-or-heure_reelle_arrivee-or-heure_reelle_depart-or-retard_minutes-or-sortie_anticipee_minutes-or-statut_final-or-travaille_aujourd_hui-or-commentaire-or-mode_pointage-or-lieu_pointage-or-lieu_travail-or-cycle_travail_debut-or-cycle_travail_fin-or-est_equipe_nuit-or-h_travail_"
 			},
 			"AnalyseOutput": {
 				"properties": {
@@ -1711,6 +1714,9 @@
 					},
 					"est_equipe_nuit": {
 						"type": "boolean"
+					},
+					"h_travail": {
+						"type": "string"
 					},
 					"user": {
 						"properties": {
@@ -6197,6 +6203,146 @@
 					{
 						"in": "path",
 						"name": "date",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/analyses/heures-travail/{date}": {
+			"get": {
+				"operationId": "GetAnalysesParHeuresTravail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/AnalyseOutput"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Analyse"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "date",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "filtre",
+						"required": false,
+						"schema": {
+							"default": "normal",
+							"type": "string",
+							"enum": [
+								"normal",
+								"pas_sortie",
+								"anomalie",
+								"court",
+								"long"
+							]
+						}
+					}
+				]
+			}
+		},
+		"/analyses/statistiques-heures-travail/{date}": {
+			"get": {
+				"operationId": "GetStatistiquesHeuresTravail",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"statistiques": {},
+										"date": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"statistiques",
+										"date"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Analyse"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "date",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/analyses/heures-travail-periode/{dateDebut}/{dateFin}": {
+			"get": {
+				"operationId": "GetStatistiquesHeuresTravailPeriode",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"statistiques": {},
+										"periode": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"statistiques",
+										"periode"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Analyse"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "dateDebut",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "dateFin",
 						"required": true,
 						"schema": {
 							"type": "string"

@@ -87,6 +87,7 @@ interface AnalyseOutput {
   mode_pointage: string;
   lieu_pointage: string;
   lieu_travail?: string;
+  h_travail?: string;
   date_analyse: Date;
   user?: {
     id_user: number;
@@ -182,7 +183,7 @@ const Analyse = () => {
     try {
       const response = await axiosInstance.get(`/analyses/date/"${date}"`);
       setAnalyses(response.data);
-      //console.log(response)
+      
       
       // Appliquer le filtre par lieu de travail
       const filteredData = applyLieuTravailFilter(response.data, selectedLieuTravail);
@@ -400,6 +401,7 @@ const Analyse = () => {
       row.mode_pointage || '-',
       row.lieu_pointage || '-',
       row.lieu_travail || '-',
+      row.h_travail || '-',
       row.commentaire || '-'
     ]);
 
@@ -418,6 +420,7 @@ const Analyse = () => {
       'Mode',
       'Lieu Pointage',
       'Lieu Travail',
+      'Heures Travail',
       'Commentaire'
     ];
 
@@ -428,7 +431,7 @@ const Analyse = () => {
       styles: { fontSize: 7 },
       headStyles: { fillColor: [71, 85, 105] },
       columnStyles: {
-        14: { cellWidth: 25 } // Commentaire plus large
+        15: { cellWidth: 25 } // Commentaire plus large (maintenant à l'index 15)
       },
       margin: { left: 10, right: 10 }
     });
@@ -717,7 +720,7 @@ const Analyse = () => {
       },
       {
         accessorKey: 'lieu_travail',
-        header: 'Lieu de Travail',
+        header: 'Rattachement',
         size: 140,
         Cell: ({ cell }) => {
           const lieuTravail = cell.getValue<string>();
@@ -731,6 +734,156 @@ const Analyse = () => {
             />
           ) : (
             <Typography variant="body2" color="text.secondary">N/A</Typography>
+          );
+        },
+      },
+      {
+        accessorKey: 'h_travail',
+        header: 'Heures Travail',
+        size: 130,
+        Cell: ({ cell }) => {
+          const hTravail = cell.getValue<string>();
+          if (!hTravail) {
+            return (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                p: 1,
+                borderRadius: 2,
+                bgcolor: 'grey.100',
+                border: '1px dashed grey.300'
+              }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  Non défini
+                </Typography>
+              </Box>
+            );
+          }
+          
+          // Styles différents selon le type de valeur
+          if (hTravail === "pas_sortie") {
+            return (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                p: 1.5,
+                borderRadius: 3,
+                bgcolor: 'orange.50',
+                border: '2px solid orange.200',
+                boxShadow: '0 2px 8px rgba(255, 152, 0, 0.2)',
+                position: 'relative',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: -2,
+                  left: -2,
+                  right: -2,
+                  bottom: -2,
+                  borderRadius: 3,
+                  background: 'linear-gradient(45deg, #ff9800, #ff5722)',
+                  zIndex: -1,
+                  opacity: 0.3
+                }
+              }}>
+                <WarningIcon sx={{ color: 'orange.600', fontSize: 18 }} />
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontWeight: 'bold',
+                    color: 'orange.800',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {hTravail}
+                </Typography>
+              </Box>
+            );
+          } 
+          
+          if (hTravail === "anomalie") {
+            return (
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                p: 1.5,
+                borderRadius: 3,
+                bgcolor: 'red.50',
+                border: '2px solid red.200',
+                boxShadow: '0 2px 8px rgba(244, 67, 54, 0.2)',
+                position: 'relative',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: -2,
+                  left: -2,
+                  right: -2,
+                  bottom: -2,
+                  borderRadius: 3,
+                  background: 'linear-gradient(45deg, #f44336, #d32f2f)',
+                  zIndex: -1,
+                  opacity: 0.3
+                }
+              }}>
+                <CancelIcon sx={{ color: 'red.600', fontSize: 18 }} />
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    fontWeight: 'bold',
+                    color: 'red.800',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {hTravail}
+                </Typography>
+              </Box>
+            );
+          }
+          
+          // Pour les heures normales (format "8h30")
+          return (
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1.5,
+              p: 1.5,
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #4caf50, #66bb6a)',
+              color: 'white',
+              boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
+                transform: 'translateX(-100%)',
+                transition: 'transform 0.6s ease-in-out'
+              },
+              '&:hover::before': {
+                transform: 'translateX(100%)'
+              }
+            }}>
+              <AccessTimeIcon sx={{ fontSize: 18, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }} />
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  fontWeight: 'bold',
+                  fontFamily: 'monospace',
+                  fontSize: '0.875rem',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                  letterSpacing: '0.5px'
+                }}
+              >
+                {hTravail}
+              </Typography>
+            </Box>
           );
         },
       },
@@ -822,7 +975,28 @@ const Analyse = () => {
   }, [selectedLieuTravail, analyses]);
 
   return (
-    <Container maxWidth="xl" className="pt-20">
+    <Box className="pt-20" sx={{ 
+      maxWidth: '100%',
+      width: '100%',
+      px: 2,
+      '@media (min-width: 1200px)': {
+        maxWidth: '1620px',
+        width: '100%',
+        margin: '0 auto',
+        px: 3
+      },
+      '@media (min-width: 1536px)': {
+        maxWidth: '1536px',
+        width: '100%',
+        px: 4
+      },
+      '@media (min-width: 1920px)': {
+        maxWidth: '2000px',
+        width: '100%',
+        margin: '0 auto',
+        px: 6
+      }
+    }}>
       {/* En-tête avec titre et actions */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
@@ -841,7 +1015,7 @@ const Analyse = () => {
               size="small"
             />
             <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Lieu de travail</InputLabel>
+              <InputLabel color="secondary">Rattachement</InputLabel>
               <Select
                 value={selectedLieuTravail}
                 onChange={(e) => setSelectedLieuTravail(e.target.value)}
@@ -869,6 +1043,7 @@ const Analyse = () => {
               onClick={() => loadAnalyses(selectedDate)}
               disabled={isLoading}
               startIcon={<RefreshIcon />}
+              color="secondary"
             >
               Actualiser
             </Button>
@@ -897,23 +1072,19 @@ const Analyse = () => {
               {/* Carte Présents */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
                 <Card sx={{ 
-                  backgroundColor: 'transparent',
-                  backgroundImage: `
-                    repeating-linear-gradient(45deg, ${alpha('#4CAF50', 0.1)} 0 2px, transparent 2px 4px),
-                    linear-gradient(135deg, ${alpha('#4CAF50', 0.8)} 0%, ${alpha('#2E7D32', 0.9)} 100%)
-                  `,
-                  backgroundBlendMode: 'overlay, normal',
-                  color: 'white',
-                  boxShadow: '0 8px 32px rgba(76, 175, 80, 0.3)',
+                  background: `linear-gradient(135deg, ${alpha('#4CAF50', 0.1)} 0%, ${alpha('#4CAF50', 0.05)} 100%)`,
+                  border: `1px solid ${alpha('#4CAF50', 0.2)}`,
+                  color: '#2E7D32',
+                  boxShadow: '0 4px 20px rgba(76, 175, 80, 0.15)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 40px rgba(76, 175, 80, 0.4)'
+                    boxShadow: '0 8px 24px rgba(76, 175, 80, 0.2)'
                   }
                 }}>
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                    <EventAvailableIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                    <EventAvailableIcon sx={{ fontSize: 28, mb: 1, color: '#4CAF50' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                       {stats.presents}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Présents</Typography>
@@ -924,23 +1095,19 @@ const Analyse = () => {
               {/* Carte Absents */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
                 <Card sx={{ 
-                  backgroundColor: 'transparent',
-                  backgroundImage: `
-                    repeating-linear-gradient(45deg, ${alpha('#F44336', 0.1)} 0 2px, transparent 2px 4px),
-                    linear-gradient(135deg, ${alpha('#F44336', 0.8)} 0%, ${alpha('#C62828', 0.9)} 100%)
-                  `,
-                  backgroundBlendMode: 'overlay, normal',
-                  color: 'white',
-                  boxShadow: '0 8px 32px rgba(244, 67, 54, 0.3)',
+                  background: `linear-gradient(135deg, ${alpha('#F44336', 0.1)} 0%, ${alpha('#F44336', 0.05)} 100%)`,
+                  border: `1px solid ${alpha('#F44336', 0.2)}`,
+                  color: '#C62828',
+                  boxShadow: '0 4px 20px rgba(244, 67, 54, 0.15)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 40px rgba(244, 67, 54, 0.4)'
+                    boxShadow: '0 8px 24px rgba(244, 67, 54, 0.2)'
                   }
                 }}>
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                    <EventBusyIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                    <EventBusyIcon sx={{ fontSize: 28, mb: 1, color: '#F44336' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                       {stats.absents}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Absents</Typography>
@@ -951,23 +1118,19 @@ const Analyse = () => {
               {/* Carte Retards */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
                 <Card sx={{ 
-                  backgroundColor: 'transparent',
-                  backgroundImage: `
-                    repeating-linear-gradient(45deg, ${alpha('#FF9800', 0.1)} 0 2px, transparent 2px 4px),
-                    linear-gradient(135deg, ${alpha('#FF9800', 0.8)} 0%, ${alpha('#E65100', 0.9)} 100%)
-                  `,
-                  backgroundBlendMode: 'overlay, normal',
-                  color: 'white',
-                  boxShadow: '0 8px 32px rgba(255, 152, 0, 0.3)',
+                  background: `linear-gradient(135deg, ${alpha('#FF9800', 0.1)} 0%, ${alpha('#FF9800', 0.05)} 100%)`,
+                  border: `1px solid ${alpha('#FF9800', 0.2)}`,
+                  color: '#E65100',
+                  boxShadow: '0 4px 20px rgba(255, 152, 0, 0.15)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 40px rgba(255, 152, 0, 0.4)'
+                    boxShadow: '0 8px 24px rgba(255, 152, 0, 0.2)'
                   }
                 }}>
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                    <ScheduleIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                    <ScheduleIcon sx={{ fontSize: 28, mb: 1, color: '#FF9800' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                       {stats.retards + stats.presents_avec_retard}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Retards</Typography>
@@ -978,23 +1141,19 @@ const Analyse = () => {
               {/* Carte Sorties Anticipées */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
                 <Card sx={{ 
-                  backgroundColor: 'transparent',
-                  backgroundImage: `
-                    repeating-linear-gradient(45deg, ${alpha('#2196F3', 0.1)} 0 2px, transparent 2px 4px),
-                    linear-gradient(135deg, ${alpha('#2196F3', 0.8)} 0%, ${alpha('#1565C0', 0.9)} 100%)
-                  `,
-                  backgroundBlendMode: 'overlay, normal',
-                  color: 'white',
-                  boxShadow: '0 8px 32px rgba(33, 150, 243, 0.3)',
+                  background: `linear-gradient(135deg, ${alpha('#2196F3', 0.1)} 0%, ${alpha('#2196F3', 0.05)} 100%)`,
+                  border: `1px solid ${alpha('#2196F3', 0.2)}`,
+                  color: '#1565C0',
+                  boxShadow: '0 4px 20px rgba(33, 150, 243, 0.15)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 40px rgba(33, 150, 243, 0.4)'
+                    boxShadow: '0 8px 24px rgba(33, 150, 243, 0.2)'
                   }
                 }}>
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                    <ExitIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                    <ExitIcon sx={{ fontSize: 28, mb: 1, color: '#2196F3' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                       {stats.sorties_anticipees}
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Sorties Anticipées</Typography>
@@ -1005,23 +1164,19 @@ const Analyse = () => {
               {/* Carte Taux Présence */}
               <Box sx={{ flex: '1 1 calc(20% - 8px)', minWidth: '140px' }}>
                 <Card sx={{ 
-                  backgroundColor: 'transparent',
-                  backgroundImage: `
-                    repeating-linear-gradient(45deg, ${alpha('#9C27B0', 0.1)} 0 2px, transparent 2px 4px),
-                    linear-gradient(135deg, ${alpha('#9C27B0', 0.8)} 0%, ${alpha('#6A1B9A', 0.9)} 100%)
-                  `,
-                  backgroundBlendMode: 'overlay, normal',
-                  color: 'white',
-                  boxShadow: '0 8px 32px rgba(156, 39, 176, 0.3)',
+                  background: `linear-gradient(135deg, ${alpha('#9C27B0', 0.1)} 0%, ${alpha('#9C27B0', 0.05)} 100%)`,
+                  border: `1px solid ${alpha('#9C27B0', 0.2)}`,
+                  color: '#6A1B9A',
+                  boxShadow: '0 4px 20px rgba(156, 39, 176, 0.15)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 40px rgba(156, 39, 176, 0.4)'
+                    boxShadow: '0 8px 24px rgba(156, 39, 176, 0.2)'
                   }
                 }}>
                   <CardContent sx={{ textAlign: 'center', py: 2 }}>
-                    <PersonIcon sx={{ fontSize: 28, mb: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }} />
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+                    <PersonIcon sx={{ fontSize: 28, mb: 1, color: '#9C27B0' }} />
+                    <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
                       {stats.taux_presence}%
                     </Typography>
                     <Typography variant="body2" sx={{ fontWeight: 'medium' }}>Taux Présence</Typography>
@@ -1109,7 +1264,7 @@ const Analyse = () => {
           ) : (
             <Alert severity="info" sx={{ mb: 3 }}>
               <Typography>
-                📍 Filtrage par lieu de travail : <strong>{selectedLieuTravail}</strong> 
+                📍 Filtrage par rattachement : <strong>{selectedLieuTravail}</strong> 
                 ({filteredAnalyses.length} analyse{filteredAnalyses.length > 1 ? 's' : ''} sur {analyses.length} total)
               </Typography>
             </Alert>
@@ -1199,9 +1354,9 @@ const Analyse = () => {
             </DialogActions>
           </Box>
         </Fade>
-      </Modal>
-    </Container>
-  );
-};
+             </Modal>
+     </Box>
+   );
+ };
 
 export default Analyse;

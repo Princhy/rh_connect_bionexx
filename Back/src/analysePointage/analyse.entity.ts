@@ -73,6 +73,9 @@ export class Analyse {
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   date_analyse: Date;
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  h_travail: string; // ls
+
   // Relations
   @ManyToOne(() => User)
   @JoinColumn({ name: "matricule", referencedColumnName: "matricule" })
@@ -100,6 +103,7 @@ export interface IAnalyse {
    cycle_travail_debut?: Date;
   cycle_travail_fin?: Date;
     est_equipe_nuit?: boolean;
+  h_travail?: string;
 }
 
 export interface AnalyseOutput extends IAnalyse {

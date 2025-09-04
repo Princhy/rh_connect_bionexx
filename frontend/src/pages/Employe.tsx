@@ -57,13 +57,20 @@ const style = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 600,
+  width: '95%',
+  maxWidth: 600,
   bgcolor: 'background.paper',
   boxShadow: 24,
-  p: 4,
+  p: { xs: 2, sm: 3, md: 4 },
   maxHeight: '90vh',
   overflow: 'auto',
   borderRadius: 2,
+  '@media (max-width: 600px)': {
+    width: '98%',
+    top: '40%',
+    transform: 'translate(-50%, -40%)',
+    maxHeight: '95vh'
+  }
 };
 
 const deleteStyle = {
@@ -71,11 +78,17 @@ const deleteStyle = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 400,
+  width: '90%',
+  maxWidth: 400,
   bgcolor: 'background.paper',
   boxShadow: 24,
-  p: 4,
+  p: { xs: 2, sm: 3, md: 4 },
   borderRadius: 2,
+  '@media (max-width: 600px)': {
+    width: '95%',
+    top: '40%',
+    transform: 'translate(-50%, -40%)'
+  }
 };
 
 const ListeEmployes = () => {
@@ -413,19 +426,61 @@ const ListeEmployes = () => {
 
 
   return (
-    <Container maxWidth="xl" className='pt-20'>
-      <Grid container spacing={2}>
-        <Grid size={10}>
-          <Typography variant="h4" gutterBottom>
-            Liste des employés
+    <Box className="pt-20" sx={{ 
+      maxWidth: '100%',
+      width: '100%',
+      px: 2,
+      '@media (min-width: 1200px)': {
+        maxWidth: '1620px',
+        width: '100%',
+        margin: '0 auto',
+        px: 3
+      },
+      '@media (min-width: 1536px)': {
+        maxWidth: '1536px',
+        width: '100%',
+        px: 4
+      },
+      '@media (min-width: 1920px)': {
+        maxWidth: '2000px',
+        width: '100%',
+        margin: '0 auto',
+        px: 6
+      }
+    }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexWrap: 'wrap', 
+        gap: 2, 
+        mb: 3,
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <Box sx={{ flex: '1 1 auto', minWidth: '200px' }}>
+          <Typography 
+            variant="h4" 
+            gutterBottom
+            sx={{
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem', lg: '2.5rem' }
+            }}
+          >
+            👥 Liste des employés
           </Typography>
-        </Grid>
-        <Grid size={2}>
-          <Button variant='contained' color='success' onClick={()=> navigate('register')}>
+        </Box>
+        <Box sx={{ flex: '0 0 auto' }}>
+          <Button 
+            variant='contained' 
+            color='success' 
+            onClick={()=> navigate('register')}
+            sx={{
+              whiteSpace: 'nowrap',
+              minWidth: { xs: '120px', sm: '140px', md: '160px' }
+            }}
+          >
             Nouveau Employé
           </Button>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
       
       {isLoading ? (
           <LinearProgress color='secondary' />
@@ -498,91 +553,101 @@ const ListeEmployes = () => {
             </Typography>
             
             <Box sx={{ mt: 1 }}>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+              <Box sx={{ 
+                display: 'grid', 
+                gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(2, 1fr)' },
+                gap: { xs: 2, sm: 2, md: 3 }
+              }}>
+                <Box>
                   <TextField
                     fullWidth
                     label="Matricule"
                     value={editForm.matricule || ''}
                     onChange={(e) => setEditForm({...editForm, matricule: e.target.value})}
+                    size="small"
                   />
                 </Box>
                 
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+                <Box>
                   <TextField
                     fullWidth
                     label="Badge"
                     value={editForm.badge || ''}
                     onChange={(e) => setEditForm({...editForm, badge: e.target.value})}
+                    size="small"
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+                <Box>
                   <TextField
                     fullWidth
                     label="Nom"
                     value={editForm.nom || ''}
                     onChange={(e) => setEditForm({...editForm, nom: e.target.value})}
+                    size="small"
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+                <Box>
                   <TextField
                     fullWidth
                     label="Prénom"
                     value={editForm.prenom || ''}
                     onChange={(e) => setEditForm({...editForm, prenom: e.target.value})}
+                    size="small"
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 100%' }}>
+                <Box sx={{ gridColumn: { xs: '1', sm: '1 / -1', md: '1 / -1' } }}>
                   <TextField
                     fullWidth
                     label="Email"
                     type="email"
                     value={editForm.email || ''}
                     onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                    size="small"
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+                <Box>
                   <TextField
                     fullWidth
                     label="Téléphone"
                     value={editForm.phone || ''}
                     onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                    size="small"
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+                <Box>
                   <Autocomplete
                     options={posteOptions}
                     value={editForm.poste || ''}
                     onChange={(_, newValue) => setEditForm({...editForm, poste: newValue || ''})}
-                    renderInput={(params) => <TextField {...params} label="Poste" />}
+                    renderInput={(params) => <TextField {...params} label="Poste" size="small" />}
                     freeSolo
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+                <Box>
                   <Autocomplete
                     options={typeContratOptions}
                     value={editForm.type_contrat || ''}
                     onChange={(_, newValue) => setEditForm({...editForm, type_contrat: newValue || ''})}
-                    renderInput={(params) => <TextField {...params} label="Type de contrat" />}
+                    renderInput={(params) => <TextField {...params} label="Type de contrat" size="small" />}
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+                <Box>
                   <Autocomplete
                     options={roleOptions}
                     value={editForm.role || ''}
                     onChange={(_, newValue) => setEditForm({...editForm, role: newValue || ''})}
-                    renderInput={(params) => <TextField {...params} label="Rôle" />}
+                    renderInput={(params) => <TextField {...params} label="Rôle" size="small" />}
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+                <Box>
                   <TextField
                     fullWidth
                     label="Date d'embauche"
@@ -590,10 +655,11 @@ const ListeEmployes = () => {
                     value={editForm.date_embauche ? editForm.date_embauche.split('T')[0] : ''}
                     onChange={(e) => setEditForm({...editForm, date_embauche: e.target.value})}
                     InputLabelProps={{ shrink: true }}
+                    size="small"
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '250px' }}>
+                <Box>
                   <TextField
                     fullWidth
                     label="Date fin de contrat"
@@ -601,36 +667,37 @@ const ListeEmployes = () => {
                     value={editForm.date_fin_contrat ? editForm.date_fin_contrat.split('T')[0] : ''}
                     onChange={(e) => setEditForm({...editForm, date_fin_contrat: e.target.value})}
                     InputLabelProps={{ shrink: true }}
+                    size="small"
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(33% - 8px)', minWidth: '200px' }}>
+                <Box>
                   <Autocomplete
                     options={lieux}
                     getOptionLabel={(option) => option.nom || option.lieu || 'Lieu inconnu'}
-                    value={lieux.find(l => (l.id || l.id_lieu) === editForm.id_lieu) || null}
+                    value={departements.find(d => (d.id || d.id_departement) === editForm.id_departement) || null}
                     onChange={(_, newValue) => setEditForm({...editForm, id_lieu: (newValue?.id || newValue?.id_lieu) || 0})}
-                    renderInput={(params) => <TextField {...params} label="Lieu" />}
+                    renderInput={(params) => <TextField {...params} label="Lieu" size="small" />}
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(33% - 8px)', minWidth: '200px' }}>
+                <Box>
                   <Autocomplete
                     options={equipes}
                     getOptionLabel={(option) => option.nom || option.equipe || 'Équipe inconnue'}
                     value={equipes.find(e => (e.id || e.id_equipe) === editForm.id_equipe) || null}
                     onChange={(_, newValue) => setEditForm({...editForm, id_equipe: (newValue?.id || newValue?.id_equipe) || 0})}
-                    renderInput={(params) => <TextField {...params} label="Équipe" />}
+                    renderInput={(params) => <TextField {...params} label="Équipe" size="small" />}
                   />
                 </Box>
 
-                <Box sx={{ flex: '1 1 calc(33% - 8px)', minWidth: '200px' }}>
+                <Box>
                   <Autocomplete
                     options={departements}
                     getOptionLabel={(option) => option.nom || option.departement || 'Département inconnu'}
                     value={departements.find(d => (d.id || d.id_departement) === editForm.id_departement) || null}
                     onChange={(_, newValue) => setEditForm({...editForm, id_departement: (newValue?.id || newValue?.id_departement) || 0})}
-                    renderInput={(params) => <TextField {...params} label="Département" />}
+                    renderInput={(params) => <TextField {...params} label="Département" size="small" />}
                   />
                 </Box>
               </Box>
@@ -656,7 +723,7 @@ const ListeEmployes = () => {
           </Box>
         </Fade>
       </Modal>
-    </Container>
+    </Box>
   );
 };
 

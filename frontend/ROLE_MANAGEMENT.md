@@ -200,10 +200,10 @@ Utilisez le composant `RoleBasedActions` pour afficher des actions conditionnell
 import RoleBasedActions from '../components/RoleBasedActions';
 
 function EmployePage() {
-  const handleAdd = () => console.log('Ajouter employé');
-  const handleEdit = () => console.log('Modifier employé');
-  const handleDelete = () => console.log('Supprimer employé');
-  const handleView = () => console.log('Voir employé');
+  const handleAdd = () => {};
+const handleEdit = () => {};
+const handleDelete = () => {};
+const handleView = () => {};
 
   return (
     <div>

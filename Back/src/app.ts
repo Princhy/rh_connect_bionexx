@@ -42,14 +42,18 @@ app.use(cors({
 
 // Cookie parser
 app.use(cookieParser(process.env.JWT_SECRET));
-
-// 🔔 WEBHOOK POUR POINTEUSES HIKVISION (AVANT TSOA)
-const webhookController = new WebhookController();
-app.post('/pointages/webhook-notification', 
-  upload.any(), 
-  rateLimiter.middleware(),
-  (req, res) => webhookController.handleHikvisionWebhook(req, res)
-);
+// �� WEBHOOK POUR POINTEUSES HIKVISION (AVANT TSOA)
+if (process.env.ENABLE_WEBHOOKS !== 'false') {
+  const webhookController = new WebhookController();
+  app.post('/pointages/webhook-notification', 
+    upload.any(), 
+    rateLimiter.middleware(),
+    (req, res) => webhookController.handleHikvisionWebhook(req, res)
+  );
+  console.log("✅ Webhooks activés");
+} else {
+  console.log("🚫 Webhooks désactivés");
+}
 
 // Routes TSOA
 RegisterRoutes(app);

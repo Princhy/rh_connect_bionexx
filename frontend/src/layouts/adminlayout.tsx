@@ -20,7 +20,23 @@ export default function AdminLayout() {
         transition: 'margin-left 0.3s ease'
       }}>
         <ResponsiveAppBar />
-        <Box component="main" sx={{ p: 3 ,}}>
+        <Box component="main" sx={{ 
+          p: 3,
+          maxWidth: '100%',
+          width: '100%',
+          '@media (min-width: 1200px)': {
+            maxWidth: '100%',
+            width: '100%'
+          },
+          '@media (min-width: 1536px)': {
+            maxWidth: '100%',
+            width: '100%'
+          },
+          '@media (min-width: 1920px)': {
+            maxWidth: '100%',
+            width: '100%'
+          }
+        }}>
           <Outlet />
         </Box>
       </Box>

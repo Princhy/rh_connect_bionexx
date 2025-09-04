@@ -78,7 +78,7 @@ axiosInstance.interceptors.response.use(
                 processQueue(null, result.data.accessToken);
                 originalRequest.headers.Authorization = result.data.accessToken;
                 setInstanceTokens(result.data.accessToken);
-                console.log(result.data.accessToken)
+        
                 return await axiosInstance(originalRequest);
             } catch (err) {
                 processQueue(err, null);

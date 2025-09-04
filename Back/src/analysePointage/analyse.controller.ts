@@ -332,7 +332,20 @@ export class AnalyseController extends Controller {
             total_sortie_anticipee_minutes: 0,
             retard_moyen_minutes: 0,
             taux_presence: 0,
-            taux_absence: 0
+            taux_absence: 0,
+            // Statistiques d'heures de travail
+            total_heures_travail: 0,
+            total_minutes_travail: 0,
+            moyenne_heures_travail: "0h00",
+            moyenne_heures_par_jour: "0.0",
+            jours_avec_heures_completes: 0,
+            jours_pas_sortie: 0,
+            jours_anomalies: 0,
+            jours_court_travail: 0,
+            jours_long_travail: 0,
+            taux_heures_completes: 0,
+            taux_pas_sortie: 0,
+            taux_anomalies: 0
           }
         };
       }
@@ -523,6 +536,84 @@ export class AnalyseController extends Controller {
     return new AnalyseService().getEmployesEnRepos(date);
   }
 
+  // ===== NOUVELLES ROUTES POUR LES HEURES DE TRAVAIL =====
+
+  @Get("heures-travail/{date}")
+  //@Security("jwt", ["admin", "RH", "superviseur"])
+  public async getAnalysesParHeuresTravail(
+    @Path() date: string,
+    @Query() filtre: 'normal' | 'pas_sortie' | 'anomalie' | 'court' | 'long' = 'normal'
+  ): Promise<AnalyseOutput[]> {
+    return new AnalyseService().getAnalysesParHeuresTravail(date, filtre);
+  }
+
+  @Get("statistiques-heures-travail/{date}")
+  //@Security("jwt", ["admin", "RH", "superviseur"])
+  public async getStatistiquesHeuresTravail(@Path() date: string): Promise<{
+    date: string;
+    statistiques: any;
+  }> {
+    try {
+      const analyses = await new AnalyseService().getAnalysesByDate(date);
+      
+      if (analyses.length === 0) {
+        return {
+          date,
+          statistiques: {
+            message: "Aucune analyse trouvée pour cette date. Lancez d'abord l'analyse.",
+            total_analyses: 0,
+            analyses_avec_heures: 0,
+            pas_sortie: 0,
+            anomalies: 0,
+            heures_completes: 0,
+            total_heures_travail: 0,
+            moyenne_heures_travail: "0h00",
+            taux_heures_completes: 0,
+            taux_pas_sortie: 0,
+            taux_anomalies: 0
+          }
+        };
+      }
+
+      const analyseService = new AnalyseService();
+      const statistiques = analyseService.calculerStatistiquesHeuresTravail(analyses);
+
+      return {
+        date,
+        statistiques
+      };
+    } catch (error) {
+      throw new Error(`Erreur calcul statistiques heures de travail: ${error}`);
+    }
+  }
+
+  @Get("heures-travail-periode/{dateDebut}/{dateFin}")
+  //@Security("jwt", ["admin", "RH", "superviseur"])
+  public async getStatistiquesHeuresTravailPeriode(
+    @Path() dateDebut: string,
+    @Path() dateFin: string
+  ): Promise<{
+    periode: string;
+    statistiques: any;
+  }> {
+    try {
+      if (!dateDebut || !dateFin) {
+        throw new Error("dateDebut et dateFin sont requis");
+      }
+
+      const analyseService = new AnalyseService();
+      const analyses = await analyseService.getAnalysesPeriode(dateDebut, dateFin, 1, 100000, false);
+      const statistiques = analyseService.calculerStatistiquesHeuresTravail(analyses.analyses);
+
+      return {
+        periode: `${dateDebut} au ${dateFin}`,
+        statistiques
+      };
+    } catch (error) {
+      throw new Error(`Erreur calcul statistiques heures de travail période: ${error}`);
+    }
+  }
+
   // ===== EXPORTS =====
 
   @Get("export-csv/{date}")
@@ -549,7 +640,7 @@ export class AnalyseController extends Controller {
         "Heure Prévue Arrivée", "Heure Prévue Départ",
         "Heure Réelle Arrivée", "Heure Réelle Départ",
         "Retard (min)", "Sortie Anticipée (min)",
-        "Statut", "Justifié", "Commentaire"
+        "Heures de Travail", "Statut", "Justifié", "Commentaire"
       ];
 
       const rows = analyses.map(a => [
@@ -564,6 +655,7 @@ export class AnalyseController extends Controller {
         a.heure_reelle_depart || '',
         a.retard_minutes.toString(),
         a.sortie_anticipee_minutes.toString(),
+        a.h_travail || '',
         a.statut_final,
         a.justifie ? 'Oui' : 'Non',
         a.commentaire || ''

@@ -6,7 +6,6 @@ import {
   type MRT_Row,
 } from 'material-react-table';
 import { 
-  Container, 
   Typography, 
   LinearProgress,
   Modal, 
@@ -20,9 +19,7 @@ import {
   Alert,
   Chip,
   Tooltip,
-  IconButton,
-  FormControlLabel,
-  Switch
+  IconButton
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -217,11 +214,11 @@ const Conges = () => {
     return hasRole('Admin') || hasRole('RH') || hasRole('Superviseur') || hasRole('Employe');
   };
 
-  const canEdit = (conge: Conge) => {
+  const canEdit = (_conge: Conge) => {
     return hasRole('Admin') || hasRole('RH') || hasRole('Superviseur');
   };
 
-  const canDelete = (conge: Conge) => {
+  const canDelete = (_conge: Conge) => {
     return hasRole('Admin') || hasRole('RH') || hasRole('Superviseur');
   };
 
@@ -271,7 +268,7 @@ const Conges = () => {
       
       const response = await axiosInstance.get(url);
       setData(response.data);
-      console.log(response.data);
+      
     } catch (err) {
       setError('Erreur lors du chargement des données de congé');
       console.error('Error fetching conge data:', err);
@@ -396,14 +393,7 @@ const Conges = () => {
     );
   };
 
-  // Calcul du nombre de jours
-  const calculateDays = (dateDepart: string, dateReprise: string) => {
-    const start = new Date(dateDepart);
-    const end = new Date(dateReprise);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
+
 
   // Fonction d'export PDF
   const handleExportRows = (rows: MRT_Row<Conge>[]) => {
@@ -643,21 +633,41 @@ const Conges = () => {
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
-    <Container maxWidth="xl" className='pt-20'>
-      <Container maxWidth="xl">
-        <Box 
-          sx={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            mb: 3,
-            flexWrap: 'wrap',
-            gap: 2
-          }}
-        >
-          <Typography variant="h4" gutterBottom sx={{ margin: 0 }}>
-            Gestion des Congés
-          </Typography>
+    <Box className="pt-20" sx={{ 
+      maxWidth: '100%',
+      width: '100%',
+      px: 2,
+      '@media (min-width: 1200px)': {
+        maxWidth: '1620px',
+        width: '100%',
+        margin: '0 auto',
+        px: 3
+      },
+      '@media (min-width: 1536px)': {
+        maxWidth: '1536px',
+        width: '100%',
+        px: 4
+      },
+      '@media (min-width: 1920px)': {
+        maxWidth: '2000px',
+        width: '100%',
+        margin: '0 auto',
+        px: 6
+      }
+    }}>
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          mb: 3,
+          flexWrap: 'wrap',
+          gap: 2
+        }}
+      >
+        <Typography variant="h4" gutterBottom sx={{ margin: 0 }}>
+          Gestion des Congés
+        </Typography>
           
           <Button
             variant="contained"
@@ -670,28 +680,13 @@ const Conges = () => {
           </Button>
         </Box>
 
-        {/* Indicateur de contexte de filtrage */}
-        {data.length > 0 && (
-          <Alert severity="info" sx={{ mb: 3 }}>
-            <Typography>
-              {hasRole('Employe') && (
-                <>👤 Affichage de vos congés personnels ({data.length} congé{data.length > 1 ? 's' : ''})</>
-              )}
-              {hasRole('Superviseur') && (
-                <>🏢 Affichage des congés de votre département ({data.length} congé{data.length > 1 ? 's' : ''})</>
-              )}
-              {(hasRole('Admin') || hasRole('RH')) && (
-                <>🏢 Affichage de tous les congés ({data.length} congé{data.length > 1 ? 's' : ''})</>
-              )}
-            </Typography>
-          </Alert>
-        )}
-      </Container>
 
       {isLoading ? (
         <LinearProgress color='secondary' />
       ) : (
-        <MaterialReactTable table={table} />
+        <Box sx={{ overflowX: 'auto' }}>
+          <MaterialReactTable table={table} />
+        </Box>
       )}
 
       {/* Modal pour la suppression */}
@@ -981,7 +976,7 @@ const Conges = () => {
           </Box>
         </Fade>
       </Modal>
-    </Container>
+    </Box>
   );
 };
 

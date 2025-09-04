@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAuthenticated(false);
         }
       } catch (err) {
-        console.log('Échec de l\'authentification:', err);
+  
         setIsAuthenticated(false);
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');

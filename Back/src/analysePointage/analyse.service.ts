@@ -15,7 +15,7 @@ export type AnalyseCreationParams = Pick<
   "matricule" | "date" | "heure_prevue_arrivee" | "heure_prevue_depart" | 
   "heure_reelle_arrivee" | "heure_reelle_depart" | "retard_minutes" | 
   "sortie_anticipee_minutes" | "statut_final" | "travaille_aujourd_hui" | 
-  "commentaire" | "mode_pointage" | "lieu_pointage" | "lieu_travail" | "cycle_travail_debut" | "cycle_travail_fin" | "est_equipe_nuit"
+  "commentaire" | "mode_pointage" | "lieu_pointage" | "lieu_travail" | "cycle_travail_debut" | "cycle_travail_fin" | "est_equipe_nuit" | "h_travail"
 >;
 
 export type AnalyseUpdateParams = Partial<Pick<IAnalyse, "justifie" | "commentaire"|"statut_final" |"mode_pointage">>;
@@ -339,10 +339,11 @@ export class AnalyseService {
         sortie_anticipee_minutes: 0,
         statut_final: StatutAnalyse.EN_CONGE,
         travaille_aujourd_hui: false,
-        commentaire: `EN CONGÉ - ${verificationConge.conge?.type || 'Congé'} du ${new Date(verificationConge.conge?.date_depart).toLocaleDateString()} au ${new Date(verificationConge.conge?.date_reprise).toLocaleDateString()}`,
+        commentaire: `EN CONGÉ - ${verificationConge.conge?.type || 'Congé'} du ${new Date(verificationConge.conge?.date_reprise).toLocaleDateString()} au ${new Date(verificationConge.conge?.date_reprise).toLocaleDateString()}`,
         mode_pointage: undefined,
         lieu_pointage: undefined,
-        lieu_travail: employe.lieu_travail
+        lieu_travail: employe.lieu_travail,
+        h_travail: "0h00" // Pas de travail en congé
       };
 
       return await this.createAnalyse(analyse);
@@ -384,7 +385,8 @@ export class AnalyseService {
         : `Devrait travailler ${employe.planning.deb_heure}-${employe.planning.fin_heure}`,
       mode_pointage: undefined,
       lieu_pointage: undefined,
-      lieu_travail: employe.lieu_travail
+      lieu_travail: employe.lieu_travail,
+      h_travail: "0h00" // Valeur par défaut, sera calculée plus tard
     };
 
     // 4. Si aucun pointage
@@ -436,7 +438,10 @@ export class AnalyseService {
       }
     }
 
-    // 8. Déterminer le statut final
+    // 8. Calculer les heures de travail
+    analyse.h_travail = this.calculerHeuresTravail(pointagesEmploye, pointagesDemain, isNightShift);
+
+    // 9. Déterminer le statut final
     if (estEnRepos) {
       // Le statut reste EN_REPOS même s'il y a des pointages
       analyse.statut_final = StatutAnalyse.EN_REPOS;
@@ -451,7 +456,7 @@ export class AnalyseService {
       }
       analyse.commentaire = commentaireRepos;
       
-      console.log(`🛌 ${employe.nom} ${employe.prenom} - EN REPOS avec ${pointagesEmploye.length} pointages`);
+      console.log(`🛌 ${employe.nom} ${employe.prenom} - EN REPOS avec ${pointagesEmploye.length} pointages (h_travail: ${analyse.h_travail})`);
     } else {
       // Pour les employés qui travaillent, déterminer le statut normal
       if (!analyse.heure_reelle_arrivee) {
@@ -460,12 +465,133 @@ export class AnalyseService {
       } else {
         analyse.statut_final = this.determinerStatutFinal(analyse);
       }
+      console.log(`💼 ${employe.nom} ${employe.prenom} - ${analyse.statut_final} (h_travail: ${analyse.h_travail})`);
     }
 
     return await this.createAnalyse(analyse);
   }
 
   // ===== MÉTHODES UTILITAIRES =====
+
+  /**
+   * Calcule les heures de travail basées sur les pointages d'entrée et de sortie
+   * @param pointagesEmploye Liste des pointages de l'employé pour la journée
+   * @param pointagesDemain Pointages du lendemain (pour équipes de nuit)
+   * @param isNightShift Si l'équipe travaille de nuit
+   * @returns Format: "8h30" ou "pas_sortie" ou "anomalie"
+   */
+  private calculerHeuresTravail(
+    pointagesEmploye: any[], 
+    pointagesDemain: any[] = [], 
+    isNightShift: boolean = false
+  ): string {
+    // Trouver le premier pointage d'entrée
+    const premiereEntree = pointagesEmploye.find(p => p.type === TypePointage.ENTREE);
+    
+    // Trouver le dernier pointage de sortie (même jour ou lendemain pour équipes de nuit)
+    let derniereSortie = [...pointagesEmploye].reverse().find(p => p.type === TypePointage.SORTIE);
+    
+    if (isNightShift && pointagesDemain.length > 0) {
+      const sortieDemain = [...pointagesDemain].reverse().find(p => p.type === TypePointage.SORTIE);
+      if (sortieDemain) {
+        derniereSortie = sortieDemain;
+      }
+    }
+
+    // Cas 1: Pas d'entrée mais sortie → anomalie
+    if (!premiereEntree && derniereSortie) {
+      return "anomalie";
+    }
+
+    // Cas 2: Pas d'entrée et pas de sortie → pas de travail
+    if (!premiereEntree && !derniereSortie) {
+      return "0h00";
+    }
+
+    // Cas 3: Entrée mais pas de sortie → pas_sortie
+    if (premiereEntree && !derniereSortie) {
+      return "pas_sortie";
+    }
+
+    // Cas 4: Entrée et sortie → calculer les heures
+    if (premiereEntree && derniereSortie) {
+      const dateEntree = new Date(premiereEntree.date);
+      const dateSortie = new Date(derniereSortie.date);
+      
+      // Calculer la différence en millisecondes
+      const differenceMs = dateSortie.getTime() - dateEntree.getTime();
+      
+      // Convertir en heures et minutes
+      let differenceMinutes = Math.floor(differenceMs / (1000 * 60));
+      
+      // Déduire 1 heure de pause déjeuner (60 minutes)
+      // Seulement si le temps de travail est supérieur à 4h00 (pour éviter les valeurs négatives)
+      if (differenceMinutes > 240) {
+        differenceMinutes -= 60;
+      }
+      
+      const heures = Math.floor(differenceMinutes / 60);
+      const minutes = differenceMinutes % 60;
+      
+      // Formater le résultat
+      if (heures === 0) {
+        return `${minutes}m`;
+      } else if (minutes === 0) {
+        return `${heures}h`;
+      } else {
+        return `${heures}h${minutes.toString().padStart(2, '0')}`;
+      }
+    }
+
+    // Cas par défaut
+    return "0h00";
+  }
+
+  /**
+   * Parse les heures de travail formatées en minutes
+   * @param heuresTravail Format: "8h30", "45m", "12h"
+   * @returns Nombre de minutes
+   */
+  private parseHeuresTravail(heuresTravail: string): number {
+    if (!heuresTravail || heuresTravail === "pas_sortie" || heuresTravail === "anomalie") {
+      return 0;
+    }
+
+    const match = heuresTravail.match(/(\d+)h?(\d+)?/);
+    if (match) {
+      const heures = parseInt(match[1]) || 0;
+      const minutes = parseInt(match[2]) || 0;
+      return heures * 60 + minutes;
+    }
+
+    // Si c'est juste des minutes (ex: "45m")
+    const matchMinutes = heuresTravail.match(/(\d+)m/);
+    if (matchMinutes) {
+      return parseInt(matchMinutes[1]) || 0;
+    }
+
+    return 0;
+  }
+
+  /**
+   * Formate les minutes en format lisible d'heures de travail
+   * @param minutes Nombre de minutes
+   * @returns Format: "8h30", "45m", "12h"
+   */
+  private formatHeuresTravail(minutes: number): string {
+    if (minutes <= 0) return "0h00";
+    
+    const heures = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    
+    if (heures === 0) {
+      return `${mins}m`;
+    } else if (mins === 0) {
+      return `${heures}h`;
+    } else {
+      return `${heures}h${mins.toString().padStart(2, '0')}`;
+    }
+  }
 
   private calculerRetard(heurePrevue: string, heureReelle: Date): number {
     const [heureP, minuteP] = heurePrevue.split(':').map(Number);
@@ -579,6 +705,29 @@ export class AnalyseService {
     const tauxPresence = totalEmployesTravail > 0 ? Math.round((presentsTotal / totalEmployesTravail) * 100) : 0;
     const tauxAbsence = totalEmployesTravail > 0 ? Math.round((absents / totalEmployesTravail) * 100) : 0;
 
+    // Statistiques sur les heures de travail
+    const analysesAvecHeures = analyses.filter(a => a.h_travail && a.h_travail !== "0h00" && a.h_travail !== "anomalie");
+    const pasSortie = analyses.filter(a => a.h_travail === "pas_sortie").length;
+    const anomalies = analyses.filter(a => a.h_travail === "anomalie").length;
+    
+    // Calculer la moyenne des heures de travail (en minutes)
+    let totalHeuresTravail = 0;
+    let employesAvecHeuresCompletes = 0;
+    
+    analysesAvecHeures.forEach(analyse => {
+      if (analyse.h_travail && analyse.h_travail !== "pas_sortie" && analyse.h_travail !== "anomalie") {
+        const heures = this.parseHeuresTravail(analyse.h_travail);
+        if (heures > 0) {
+          totalHeuresTravail += heures;
+          employesAvecHeuresCompletes++;
+        }
+      }
+    });
+    
+    const moyenneHeuresTravail = employesAvecHeuresCompletes > 0 
+      ? this.formatHeuresTravail(Math.round(totalHeuresTravail / employesAvecHeuresCompletes))
+      : "0h00";
+
     return {
       total_employes: total,
       presents,
@@ -591,6 +740,12 @@ export class AnalyseService {
       taux_absence: tauxAbsence,
       retard_moyen_minutes: retardMoyen,
       en_repos: enRepos,
+      // Nouvelles statistiques sur les heures de travail
+      total_heures_travail: this.formatHeuresTravail(totalHeuresTravail),
+      moyenne_heures_travail: moyenneHeuresTravail,
+      employes_pas_sortie: pasSortie,
+      anomalies_pointage: anomalies,
+      employes_heures_completes: employesAvecHeuresCompletes
     };
   }
 
@@ -815,6 +970,15 @@ export class AnalyseService {
     let totalRetardMinutes = 0;
     let totalSortieAnticipeeMinutes = 0;
 
+    // Statistiques sur les heures de travail
+    let totalHeuresTravail = 0;
+    let totalMinutesTravail = 0;
+    let joursAvecHeuresCompletes = 0;
+    let joursPasSortie = 0;
+    let joursAnomalies = 0;
+    let joursCourtTravail = 0; // < 4h
+    let joursLongTravail = 0;  // >= 8h
+
     analyses.forEach(analyse => {
       switch (analyse.statut_final) {
         case StatutAnalyse.PRESENT:
@@ -843,6 +1007,29 @@ export class AnalyseService {
           joursRepos++;
           break;
       }
+
+      // Analyser les heures de travail
+      if (analyse.h_travail) {
+        if (analyse.h_travail === "pas_sortie") {
+          joursPasSortie++;
+        } else if (analyse.h_travail === "anomalie") {
+          joursAnomalies++;
+        } else if (analyse.h_travail !== "0h00") {
+          const minutes = this.parseHeuresTravail(analyse.h_travail);
+          if (minutes > 0) {
+            totalMinutesTravail += minutes;
+            totalHeuresTravail += Math.floor(minutes / 60);
+            joursAvecHeuresCompletes++;
+
+            // Catégoriser par durée
+            if (minutes < 240) { // < 4h
+              joursCourtTravail++;
+            } else if (minutes >= 480) { // >= 8h
+              joursLongTravail++;
+            }
+          }
+        }
+      }
     });
 
     const joursTravail = joursPresents + joursRetards + joursAbsents + joursSortiesAnticipees;
@@ -850,7 +1037,17 @@ export class AnalyseService {
     const tauxAbsence = joursTravail > 0 ? (joursAbsents / joursTravail * 100).toFixed(2) : 0;
     const retardMoyenMinutes = joursRetards > 0 ? (totalRetardMinutes / joursRetards).toFixed(2) : 0;
 
+    // Calculer les moyennes des heures de travail
+    const moyenneHeuresTravail = joursAvecHeuresCompletes > 0 
+      ? this.formatHeuresTravail(Math.round(totalMinutesTravail / joursAvecHeuresCompletes))
+      : "0h00";
+    
+    const moyenneHeuresParJour = joursAvecHeuresCompletes > 0 
+      ? (totalHeuresTravail / joursAvecHeuresCompletes).toFixed(1)
+      : "0.0";
+
     return {
+      // Statistiques de présence
       total_jours: totalJours,
       jours_presents: joursPresents,
       jours_absents: joursAbsents,
@@ -862,7 +1059,108 @@ export class AnalyseService {
       total_sortie_anticipee_minutes: totalSortieAnticipeeMinutes,
       retard_moyen_minutes: parseFloat(retardMoyenMinutes.toString()),
       taux_presence: parseFloat(tauxPresence.toString()),
-      taux_absence: parseFloat(tauxAbsence.toString())
+      taux_absence: parseFloat(tauxAbsence.toString()),
+      
+      // Nouvelles statistiques sur les heures de travail
+      total_heures_travail: totalHeuresTravail,
+      total_minutes_travail: totalMinutesTravail,
+      moyenne_heures_travail: moyenneHeuresTravail,
+      moyenne_heures_par_jour: moyenneHeuresParJour,
+      jours_avec_heures_completes: joursAvecHeuresCompletes,
+      jours_pas_sortie: joursPasSortie,
+      jours_anomalies: joursAnomalies,
+      jours_court_travail: joursCourtTravail, // < 4h
+      jours_long_travail: joursLongTravail,   // >= 8h
+      taux_heures_completes: totalJours > 0 ? Math.round((joursAvecHeuresCompletes / totalJours) * 100) : 0,
+      taux_pas_sortie: totalJours > 0 ? Math.round((joursPasSortie / totalJours) * 100) : 0,
+      taux_anomalies: totalJours > 0 ? Math.round((joursAnomalies / totalJours) * 100) : 0
+    };
+  }
+
+  // ===== MÉTHODES SPÉCIALISÉES POUR LES HEURES DE TRAVAIL =====
+
+  /**
+   * Obtient les analyses avec des filtres sur les heures de travail
+   * @param date Date d'analyse
+   * @param filtreHeures Filtre sur les heures de travail
+   * @returns Analyses filtrées
+   */
+  public async getAnalysesParHeuresTravail(date: string, filtreHeures: 'normal' | 'pas_sortie' | 'anomalie' | 'court' | 'long'): Promise<AnalyseOutput[]> {
+    const analyses = await this.getAnalysesByDate(date);
+    
+    switch (filtreHeures) {
+      case 'normal':
+        return analyses.filter(a => a.h_travail && a.h_travail !== "pas_sortie" && a.h_travail !== "anomalie" && a.h_travail !== "0h00");
+      case 'pas_sortie':
+        return analyses.filter(a => a.h_travail === "pas_sortie");
+      case 'anomalie':
+        return analyses.filter(a => a.h_travail === "anomalie");
+      case 'court':
+        return analyses.filter(a => {
+          if (!a.h_travail || a.h_travail === "pas_sortie" || a.h_travail === "anomalie") return false;
+          const minutes = this.parseHeuresTravail(a.h_travail);
+          return minutes > 0 && minutes < 240; // Moins de 4h
+        });
+      case 'long':
+        return analyses.filter(a => {
+          if (!a.h_travail || a.h_travail === "pas_sortie" || a.h_travail === "anomalie") return false;
+          const minutes = this.parseHeuresTravail(a.h_travail);
+          return minutes >= 480; // 8h ou plus
+        });
+      default:
+        return analyses;
+    }
+  }
+
+  /**
+   * Calcule les statistiques détaillées sur les heures de travail pour une période
+   * @param analyses Liste des analyses
+   * @returns Statistiques détaillées sur les heures de travail
+   */
+  public calculerStatistiquesHeuresTravail(analyses: AnalyseOutput[]): any {
+    const totalAnalyses = analyses.length;
+    const analysesAvecHeures = analyses.filter(a => a.h_travail && a.h_travail !== "0h00");
+    
+    // Répartition par type d'heures
+    const pasSortie = analyses.filter(a => a.h_travail === "pas_sortie").length;
+    const anomalies = analyses.filter(a => a.h_travail === "anomalie").length;
+    const heuresCompletes = analyses.filter(a => a.h_travail && a.h_travail !== "pas_sortie" && a.h_travail !== "anomalie" && a.h_travail !== "0h00").length;
+    
+    // Calcul des moyennes par catégorie
+    let totalHeuresTravail = 0;
+    let totalMinutesTravail = 0;
+    
+    analysesAvecHeures.forEach(analyse => {
+      if (analyse.h_travail && analyse.h_travail !== "pas_sortie" && analyse.h_travail !== "anomalie") {
+        const minutes = this.parseHeuresTravail(analyse.h_travail);
+        if (minutes > 0) {
+          totalHeuresTravail += Math.floor(minutes / 60);
+          totalMinutesTravail += minutes;
+        }
+      }
+    });
+    
+    const moyenneHeuresTravail = heuresCompletes > 0 
+      ? this.formatHeuresTravail(Math.round(totalMinutesTravail / heuresCompletes))
+      : "0h00";
+    
+    const moyenneHeuresParJour = heuresCompletes > 0 
+      ? (totalHeuresTravail / heuresCompletes).toFixed(1)
+      : "0.0";
+
+    return {
+      total_analyses: totalAnalyses,
+      analyses_avec_heures: analysesAvecHeures.length,
+      pas_sortie: pasSortie,
+      anomalies: anomalies,
+      heures_completes: heuresCompletes,
+      total_heures_travail: totalHeuresTravail,
+      total_minutes_travail: totalMinutesTravail,
+      moyenne_heures_travail: moyenneHeuresTravail,
+      moyenne_heures_par_jour: moyenneHeuresParJour,
+      taux_heures_completes: totalAnalyses > 0 ? Math.round((heuresCompletes / totalAnalyses) * 100) : 0,
+      taux_pas_sortie: totalAnalyses > 0 ? Math.round((pasSortie / totalAnalyses) * 100) : 0,
+      taux_anomalies: totalAnalyses > 0 ? Math.round((anomalies / totalAnalyses) * 100) : 0
     };
   }
 }

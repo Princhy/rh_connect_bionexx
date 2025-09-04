@@ -5,7 +5,6 @@ import {
 } from '@mui/material';
 import { useTheme, alpha, darken } from '@mui/material/styles';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import PeopleIcon from '@mui/icons-material/People';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import MenuIcon from '@mui/icons-material/Menu';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -13,9 +12,12 @@ import LocationCityIcon from '@mui/icons-material/LocationCity';
 import Diversity3TwoToneIcon from '@mui/icons-material/Diversity3TwoTone';
 import FingerprintIcon from '@mui/icons-material/Fingerprint';
 import DetailsIcon from '@mui/icons-material/Details';
-import PersonIcon from '@mui/icons-material/Person';
-import InsertInvitationIcon from '@mui/icons-material/InsertInvitation';
-//import CalendarViewMonthIcon from '@mui/icons-material/CalendarViewMonth';
+import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
+import WorkHistoryIcon from '@mui/icons-material/WorkHistory';
+import AlarmOffIcon from '@mui/icons-material/AlarmOff';
+import PeopleIcon from '@mui/icons-material/People';
+
 import { useAuth } from '../config/authConfig';
 //import ReferenceManager from '../pages/ref';
 
@@ -28,37 +30,37 @@ interface SidebarProps {
 const MENU_CONFIG = {
   Admin: [
     { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-    { path: '/employe', label: 'Employés', icon: <PeopleIcon /> },
+    { path: '/employe', label: 'Employés', icon: <ManageAccountsIcon /> },
     { path: '/ref', label: 'Références', icon: <LocationCityIcon /> },
     { path: '/equipes', label: 'Equipes', icon: <Diversity3TwoToneIcon /> },
     { path: '/pointages', label: 'Pointages', icon: <FingerprintIcon /> },
     { path: '/analyses', label: 'Analyses', icon: <DetailsIcon /> },
-    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <PersonIcon /> },
-    { path: '/analyse-periode', label: 'Analyse par Période', icon: <DetailsIcon /> },
-    { path: '/conges', label: 'Congés', icon: <InsertInvitationIcon /> }
+    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <SensorOccupiedIcon /> },
+    { path: '/analyse-periode', label: 'Analyse par Période', icon: <WorkHistoryIcon /> },
+    { path: '/conges', label: 'Congés', icon: <AlarmOffIcon /> }
   ],
   RH: [
     { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-    { path: '/employe', label: 'Employés', icon: <PeopleIcon /> },
+    { path: '/employe', label: 'Employés', icon: <ManageAccountsIcon /> },
     { path: '/ref', label: 'Références', icon: <LocationCityIcon /> },
     { path: '/equipes', label: 'Equipes', icon: <Diversity3TwoToneIcon /> },
     { path: '/pointages', label: 'Pointages', icon: <FingerprintIcon /> },
     { path: '/analyses', label: 'Analyses', icon: <DetailsIcon /> },
-    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <PersonIcon /> },
-    { path: '/analyse-periode', label: 'Analyse par Période', icon: <DetailsIcon /> },
-    { path: '/conges', label: 'Congés', icon: <InsertInvitationIcon /> }
+    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <SensorOccupiedIcon /> },
+    { path: '/analyse-periode', label: 'Analyse par Période', icon: <WorkHistoryIcon /> },
+    { path: '/conges', label: 'Congés', icon: <AlarmOffIcon /> }
   ],
   Superviseur: [
     { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-    { path: '/employe', label: 'Employés', icon: <PeopleIcon /> },
+    { path: '/employe', label: 'Employés', icon: <ManageAccountsIcon />},
     { path: '/analyses', label: 'Analyses', icon: <DetailsIcon /> },
-    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <PersonIcon /> },
-    { path: '/conges', label: 'Congés', icon: <InsertInvitationIcon /> }
+    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <SensorOccupiedIcon /> },
+    { path: '/conges', label: 'Congés', icon: <AlarmOffIcon /> }
   ],
   Employe: [
     { path: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <PersonIcon /> },
-    { path: '/conges', label: 'Congés', icon: <InsertInvitationIcon /> }
+    { path: '/analyse-employe', label: 'Analyse Individuelle', icon: <SensorOccupiedIcon /> },
+    { path: '/conges', label: 'Congés', icon: <AlarmOffIcon /> }
   ]
 };
 

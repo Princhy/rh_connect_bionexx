@@ -84,17 +84,7 @@ export class HikvisionWebhookService {
         };
       }
 
-             // Vérification des doublons
-       const existing = await this.pointageService.getPointageBySerialNo(acsEvent.serialNo);
-       if (existing) {
-         if (shouldLog()) {
-           console.log(`⏩ Pointage serialNo ${acsEvent.serialNo} déjà existant, ignoré.`);
-         }
-         return {
-           success: true,
-           message: WEBHOOK_CONFIG.MESSAGES.DUPLICATE_POINTAGE
-         };
-       }
+             
 
              // Récupération de l'employé
        const employee = await this.userService.getUserByMatricule(acsEvent.employeeNoString!);
@@ -172,33 +162,55 @@ export class HikvisionWebhookService {
        };
      }
 
+     // Vérifier que la date n'est pas trop ancienne (plus de 30 jours)
+     try {
+       const pointageDate = new Date(acsEvent.dateTime || acsEvent.date);
+       const now = new Date();
+       const diffDays = Math.abs(now.getTime() - pointageDate.getTime()) / (1000 * 60 * 60 * 24);
+       
+       if (diffDays > 30) {
+         return {
+           isValid: false,
+           message: `Pointage trop ancien (${Math.round(diffDays)} jours), limite de 30 jours dépassée`
+         };
+       }
+       
+       // Log pour les pointages rétroactifs (plus de 7 jours)
+       if (diffDays > 7) {
+         console.log(`⚠️ Pointage rétroactif détecté: ${Math.round(diffDays)} jours d'ancienneté pour ${acsEvent.employeeNoString}`);
+       }
+     } catch (error) {
+       // Si on ne peut pas parser la date, on continue
+       console.log("⚠️ Impossible de valider la date du pointage, continuation...");
+     }
+
      return { isValid: true, message: "" };
    }
 
-          /**
-      * Identifie la pointeuse par son IP
-      */
-     private async identifyPointeuse(ipAddress: string) {
-       if (shouldLog()) {
-         console.log(`🔍 Recherche de la pointeuse avec IP: ${ipAddress}`);
-       }
-       
-       const pointeuses = await this.pointeuseService.getAllPointeuses();
-       const pointeuse = pointeuses.find(p => p.adresse_ip === ipAddress);
-       
-       if (!pointeuse) {
-         console.error(`❌ Pointeuse avec IP ${ipAddress} non trouvée dans la base de données`);
-         if (shouldLog()) {
-           console.log(`📋 Pointeuses disponibles:`, pointeuses.map(p => `${p.pointeuse} (${p.adresse_ip})`));
-         }
-         return null;
-       }
-       
-       if (shouldLog()) {
-         console.log(`✅ Pointeuse identifiée: ${pointeuse.pointeuse} (${pointeuse.adresse_ip})`);
-       }
-       return pointeuse;
-     }
+            /**
+   * Identifie la pointeuse par son IP
+   */
+  private async identifyPointeuse(ipAddress: string) {
+    if (shouldLog()) {
+      console.log(`🔍 Recherche de la pointeuse avec IP: ${ipAddress}`);
+    }
+    
+    const pointeuses = await this.pointeuseService.getAllPointeuses();
+    const pointeuse = pointeuses.find(p => p.adresse_ip === ipAddress);
+    
+    if (!pointeuse) {
+      console.error(`❌ Pointeuse avec IP ${ipAddress} non trouvée dans la base de données`);
+      if (shouldLog()) {
+        console.log(`📋 Pointeuses disponibles:`, pointeuses.map(p => `${p.pointeuse} (${p.adresse_ip})`));
+      }
+      return null;
+    }
+    
+    if (shouldLog()) {
+      console.log(`✅ Pointeuse identifiée: ${pointeuse.pointeuse} (${pointeuse.adresse_ip})`);
+    }
+    return pointeuse;
+  }
 
   /**
    * Mappe les données Hikvision vers le format de pointage

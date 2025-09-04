@@ -6,7 +6,6 @@ import {
   type MRT_Row,
 } from 'material-react-table';
 import { 
-  Container, 
   Typography, 
   LinearProgress,
   Modal, 
@@ -20,7 +19,8 @@ import {
   Alert,
   Chip,
   Tooltip,
-  IconButton
+  IconButton,
+  Stack
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -524,10 +524,29 @@ const handleImportPointagesByDate = async () => {
     enablePagination: true,
     enableSorting: true,
     enableColumnFilters: true,
+    enableGlobalFilter: true,
+    enableDensityToggle: true,
+    enableFullScreenToggle: true,
     enableRowSelection: true,
     columnFilterDisplayMode: 'popover',
     paginationDisplayMode: 'pages',
     positionToolbarAlertBanner: 'bottom',
+    initialState: {
+      pagination: { pageSize: 25, pageIndex: 0 },
+      sorting: [{ id: 'date', desc: true }]
+    },
+    muiTableContainerProps: {
+      sx: {
+        maxWidth: '100%',
+        overflowX: 'auto'
+      }
+    },
+    muiTableProps: {
+      sx: {
+        tableLayout: 'fixed',
+        minWidth: { xs: '600px', sm: '700px', md: '800px' }
+      }
+    },
     renderTopToolbarCustomActions: ({ table }) => (
       <Box sx={{ display: 'flex', gap: '16px', padding: '8px', flexWrap: 'wrap' }}>
         <Button
@@ -564,62 +583,78 @@ const handleImportPointagesByDate = async () => {
   if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
-      <Container maxWidth="xl" className='pt-20'>
-        <Container maxWidth="xl">
-  {/* Header avec titre et boutons alignés */}
-  <Box 
-    sx={{ 
-      display: 'flex', 
-      justifyContent: 'space-between', 
-      alignItems: 'center',
-      mb: 3,
-      flexWrap: 'wrap',
-      gap: 2
-    }}
-  >
-    <Typography variant="h4" gutterBottom sx={{ margin: 0 }}>
-      Gestion des Pointages
-    </Typography>
-    
-    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-      <TextField
-        label="Date d'import"
-        type="date"
-        value={importDate}
-        onChange={(e) => setImportDate(e.target.value)}
-        InputLabelProps={{ shrink: true }}
-        size="small"
-        sx={{ minWidth: 180 }}
-      />
-      
-      <Button
-        variant="contained"
-        color="success"
-        onClick={handleImportPointagesByDate}
-        disabled={importLoading}
-        startIcon={importLoading ? <RefreshIcon className="animate-spin" /> : <RefreshIcon />}
-        sx={{ minWidth: 130 }}
-      >
-        {importLoading ? 'Import...' : 'Importer'}
-      </Button>
-      
-      <Button
-        variant="contained"
-        color="secondary"
-        onClick={importPointage}
-        startIcon={<RefreshIcon />}
-        sx={{ minWidth: 130 }}
-      >
-        Actualiser
-      </Button>
-    </Box>
-  </Box>
-</Container>
+    <Box className="pt-20" sx={{ 
+      maxWidth: '100%',
+      width: '100%',
+      px: 2,
+      '@media (min-width: 1200px)': {
+        maxWidth: '1620px',
+        width: '100%',
+        margin: '0 auto',
+        px: 3
+      },
+      '@media (min-width: 1536px)': {
+        maxWidth: '1536px',
+        width: '100%',
+        px: 4
+      },
+      '@media (min-width: 1920px)': {
+        maxWidth: '2000px',
+        width: '100%',
+        margin: '0 auto',
+        px: 6
+      }
+    }}>
+      {/* En-tête avec titre et actions */}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+          <Typography variant="h4" gutterBottom>
+            🕐 Gestion des Pointages
+          </Typography>
+        </Box>
+        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+          <Stack direction="row" spacing={2} justifyContent="flex-end" flexWrap="wrap">
+            <TextField
+              label="Date d'import"
+              type="date"
+              value={importDate}
+              onChange={(e) => setImportDate(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              size="small"
+              sx={{ minWidth: { xs: '100%', sm: 180 } }}
+            />
+            
+            <Button
+              variant="contained"
+              color="success"
+              onClick={handleImportPointagesByDate}
+              disabled={importLoading}
+              startIcon={importLoading ? <RefreshIcon className="animate-spin" /> : <RefreshIcon />}
+              sx={{ minWidth: { xs: '100%', sm: 130 } }}
+            >
+              {importLoading ? 'Import...' : 'Importer'}
+            </Button>
+            
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={importPointage}
+              startIcon={<RefreshIcon />}
+              sx={{ minWidth: { xs: '100%', sm: 130 } }}
+            >
+              Actualiser
+            </Button>
+          </Stack>
+        </Box>
+      </Box>
 
+      {/* Tableau des pointages */}
         {isLoading ? (
           <LinearProgress color='secondary' />
         ) : (
-          <MaterialReactTable table={table} />
+          <Box sx={{ overflowX: 'auto' }}>
+            <MaterialReactTable table={table} />
+          </Box>
         )}
 
           {/* date specifique*/}
@@ -743,7 +778,7 @@ const handleImportPointagesByDate = async () => {
             </Box>
           </Fade>
         </Modal>
-      </Container>
+    </Box>
   );
 };
 

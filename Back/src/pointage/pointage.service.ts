@@ -26,6 +26,8 @@ export class PointageService {
     return await pointageRepository().save(pointage);
   }
 
+
+
   public async getAllPointages(): Promise<PointageOutput[]> {
     return await pointageRepository().find({
       relations: ['pointeuse', 'user', 'user.lieu', 'user.equipe', 'user.departement','pointeuse.lieu'],
